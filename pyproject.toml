@@ -1,0 +1,26 @@
+[project]
+name = "taxi-trip-duration"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mohamed Elsayed", email = "mohameddelsayed177@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "joblib>=1.6.0",
+    "matplotlib>=3.11.2",
+    "notebook>=7.6.3",
+    "numpy>=2.5.3",
+    "pandas>=3.0.6",
+    "ruff>=0.16.10",
+    "scikit-learn>=1.9.1",
+    "seaborn>=0.13.2",
+]
+
+[project.scripts]
+taxi-trip-duration = "taxi_trip_duration:main"
+
+[build-system]
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
