@@ -11,9 +11,10 @@ def target_log(df):
     return df
 
 
-def date_time(df):
+def date_time(df,eda=False):
     """
     Extracts date and time features from the 'pickup_datetime' column.
+    If eda is True, it will also extract 'pickup_date' and 'pickup_time' for exploratory data analysis.
     """
     # Create a copy to avoid mutating the original DataFrame in place
     df = df.copy()
@@ -25,9 +26,12 @@ def date_time(df):
     df["pickup_day_of_week"] = df["pickup_datetime"].dt.dayofweek
     df["pickup_month"] = df["pickup_datetime"].dt.month
 
-    # Optional: Keep raw date/time objects strictly for descriptive EDA charts if needed
-    df["pickup_date"] = df["pickup_datetime"].dt.date
-    df["pickup_time"] = df["pickup_datetime"].dt.time
+    # Extract date and time features for EDA purposes
+    if eda:
+        df["pickup_date"] = df["pickup_datetime"].dt.date
+        df["pickup_time"] = df["pickup_datetime"].dt.time
+    else:
+        df.drop(columns=["pickup_datetime"], inplace=True)  # drop the original datetime column
 
     return df
 

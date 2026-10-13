@@ -70,7 +70,7 @@ def cat_num_features(df):
     Identifies categorical and numerical features in the DataFrame.
     """
     categorical_features = df.select_dtypes(include=["object"]).columns.tolist()
-    numerical_features = df.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    numerical_features = df.select_dtypes(include=["int64", "float64","int32", "float32"]).columns.tolist()
 
     return categorical_features, numerical_features
 
