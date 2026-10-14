@@ -1,32 +1,28 @@
 """
 Data Helper Utilities for NYC Taxi Trip Duration Pipeline.
 
-This module provides enterprise-grade data management utility functions, including 
-asynchronous/synchronous dataset loading, structural data validation, pipeline 
-splitting, feature categorization, and automated Scikit-Learn transformers configuration.
-
-Supported Formats: Google Python Style Guide Docstrings.
+This module provides dataset loading, data diagnostics, identifier removal,
+target separation, feature categorization, and Scikit-Learn preprocessing.
 """
 
 import os
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
+from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 
 
 def load_dataset(data_type="split"):
-    """Loads train, validation, and test datasets from the localized repository.
+    """Loads the training, validation, and test datasets.
 
     Args:
-        data_type (str, optional): The target directory to fetch data from. 
-            Options are "split" (full set) or "split_sample" (mini set). 
-            Defaults to "split".
+        data_type (str, optional): Dataset directory to load.
+            Options are "split" or "split_sample". Defaults to "split".
 
     Returns:
-        tuple: A tuple containing three pandas.DataFrame objects:
-            (train_dataframe, validation_dataframe, test_dataframe).
-            Returns (None, None, None) if an execution exception occurs.
+        tuple: (train_dataframe, validation_dataframe, test_dataframe).
+            Returns (None, None, None) if loading fails.
     """
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +32,7 @@ def load_dataset(data_type="split"):
         val_path = os.path.join(base_path, "val.csv")
         test_path = os.path.join(base_path, "test.csv")
 
-        print(f"Executing Data Ingestion from: dataset/{data_type}/")
+        print(f"Loading datasets from: dataset/{data_type}/")
         train = pd.read_csv(train_path)
         val = pd.read_csv(val_path)
         test = pd.read_csv(test_path)
@@ -44,128 +40,158 @@ def load_dataset(data_type="split"):
         return train, val, test
 
     except Exception as e:
-        print(f"Critical Error during dataset ingestion: {e}")
+        print(f"Error loading datasets: {e}")
         return None, None, None
 
 
 def checking_data(df):
-    """Performs integrity checks including shape inspection, missing values, and duplicates.
+    """Prints the shape, missing-value count, and duplicate-row count.
 
     Args:
-        df (pandas.DataFrame): The target DataFrame to profile.
+        df (pandas.DataFrame): DataFrame to inspect.
     """
     shape = df.shape
     missing_values = df.isna().sum().sum()
-    duplicates = df.duplicated().sum()
+    duplicate_rows = df.duplicated().sum()
 
-    print(f"Data Structural Diagnostics:")
-    print(f" - Matrix Shape       : {shape}")
-    print(f" - Null Observations  : {missing_values}")
-    print(f" - Duplicate Records  : {duplicates}")
+    print("Data Diagnostics:")
+    print(f" - Shape              : {shape}")
+    print(f" - Missing Values     : {missing_values}")
+    print(f" - Duplicate Records  : {duplicate_rows}")
 
 
 def drop_id_features(df):
-    """Drops high-cardinality non-predictive operational identifiers.
+    """Removes the identifier columns from a dataset.
 
     Args:
-        df (pandas.DataFrame): The input dataset containing target identifiers.
+        df (pandas.DataFrame): DataFrame containing 'id' and 'vendor_id'.
 
     Returns:
-        pandas.DataFrame: A deep copy of the dataset isolated from 'id' and 'vendor_id'.
+        pandas.DataFrame: Copy without the identifier columns.
     """
     df = df.copy()
-    df.drop(columns=["id", "vendor_id"], inplace=True)
+    df.drop(columns=["id", "vendor_id"],errors="ignore",inplace=True)
+
     return df
 
 
 def train_val_split(train, val):
-    """Splits the historical dataframes into predictor matrices (X) and target vectors (y).
+    """Separates predictors and the log-transformed target.
 
     Args:
-        train (pandas.DataFrame): The preprocessed training dataset.
-        val (pandas.DataFrame): The preprocessed validation dataset.
+        train (pandas.DataFrame): Preprocessed training dataset.
+        val (pandas.DataFrame): Preprocessed validation dataset.
 
     Returns:
-        tuple: (X_train, y_train, X_val, y_val) partitioned datasets.
+        tuple: (X_train, y_train, X_val, y_val).
     """
-    X_train = train.drop(columns=["trip_duration"])
-    y_train = train["trip_duration"]
-    X_val = val.drop(columns=["trip_duration"])
-    y_val = val["trip_duration"]
+    # Separate training predictors and target
+    X_train = train.drop(columns=["log1p_trip_duration"])
+    y_train = train["log1p_trip_duration"]
+
+    # Separate validation predictors and target
+    X_val = val.drop(columns=["log1p_trip_duration"])
+    y_val = val["log1p_trip_duration"]
 
     return X_train, y_train, X_val, y_val
 
 
-def cat_num_features(haversine_distance=False):
-    """Isolates categorical variables from numerical variables for pipeline compliance.
+def cat_num_features(
+    haversine_distance=False,
+    manhattan_distance=False,
+    season=False,
+    pickup_bearing=False,
+):
+    """Returns the categorical and numerical feature names for the model.
 
     Args:
-        haversine_distance (bool, optional): If True, dynamically injects the 
-            engineered 'haversine_distance' into the continuous numerical array. 
+        haversine_distance (bool, optional): Include 'haversine_distance'
+            among numerical features. Defaults to False.
+        manhattan_distance (bool, optional): Include 'manhattan_distance'
+            among numerical features. Defaults to False.
+        season (bool, optional): Include 'season' among categorical features.
             Defaults to False.
+        pickup_bearing (bool, optional): Include 'pickup_bearing'
+            among numerical features. Defaults to False.
 
     Returns:
-        tuple: Two lists containing column names: (categorical_features, numeric_features).
+        tuple: (categorical_features, numerical_features).
     """
+    # Define the original categorical and numerical features
     categorical_features = [
         "pickup_hour",
         "pickup_day_of_week",
         "pickup_month",
         "pickup_day_of_year",
         "passenger_count",
-        "store_and_fwd_flag"
+        "store_and_fwd_flag",
     ]
 
-    numeric_features = [
+    numerical_features = [
         "pickup_latitude",
         "pickup_longitude",
         "dropoff_latitude",
-        "dropoff_longitude"
+        "dropoff_longitude",
     ]
-    
-    if haversine_distance:
-        numeric_features.append("haversine_distance")
 
-    return categorical_features, numeric_features
+    # Include optional engineered features using their output column names
+    if haversine_distance:
+        numerical_features.append("haversine_distance")
+    if manhattan_distance:
+        numerical_features.append("manhattan_distance")
+    if season:
+        categorical_features.append("season")
+    if pickup_bearing:
+        numerical_features.append("pickup_bearing")
+
+    return categorical_features, numerical_features
 
 
 def preprocessing(categorical_features, numerical_features, scaling="standard"):
-    """Constructs a composite transformation block utilizing scikit-learn ColumnTransformer.
+    """Builds a preprocessing transformer for categorical and numerical features.
 
     Args:
-        categorical_features (list): String tokens of categorical columns to encoder.
-        numerical_features (list): String tokens of numerical columns to scale.
-        scaling (str, optional): Scaling algorithm topology. Supported tokens: 
-            "standard" (StandardScaler) or "minmax" (MinMaxScaler). Defaults to "standard".
+        categorical_features (list): Categorical column names.
+        numerical_features (list): Numerical column names.
+        scaling (str, optional): Numerical scaling method: "standard" or
+            "minmax". Defaults to "standard".
 
     Returns:
-        sklearn.compose.ColumnTransformer: Pre-configured mathematical scaling 
-            and encoding subgraph block.
-            
+        sklearn.compose.ColumnTransformer: Configured preprocessing transformer.
+
     Raises:
-        ValueError: If an unsupported scaling strategy argument is supplied.
+        ValueError: If the scaling method is unsupported.
     """
+    # Select the numerical scaling method
     if scaling == "standard":
         scaler = StandardScaler()
     elif scaling == "minmax":
         scaler = MinMaxScaler()
     else:
-        raise ValueError("Invalid continuous scaling strategy. Select 'standard' or 'minmax'.")
+        raise ValueError("Invalid scaling strategy. Select 'standard' or 'minmax'.")
 
+    # Encode categorical features and scale numerical features
     categorical_transformer = Pipeline(
-        steps=[("onehot", OneHotEncoder(handle_unknown="ignore"))]
+        steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore")),
+        ]
     )
 
     numerical_transformer = Pipeline(
-        steps=[("scaler", scaler)]
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", scaler),
+        ]
     )
 
+    # Apply the appropriate transformer to each feature group
     preprocessor = ColumnTransformer(
         transformers=[
             ("num", numerical_transformer, numerical_features),
             ("cat", categorical_transformer, categorical_features),
         ],
-        remainder="drop"  # Strict schema enforcement to prevent un-encoded string leakages
+        remainder="drop",
     )
 
     return preprocessor

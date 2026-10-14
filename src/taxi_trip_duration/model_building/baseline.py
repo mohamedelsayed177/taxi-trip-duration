@@ -1,16 +1,18 @@
 """
-New York City Taxi Trip Duration - Baseline Modeling Execution Engine.
+New York City Taxi Trip Duration - Baseline Modeling.
 
-This execution script configures and executes the formal baseline training sequence 
-to benchmark performance under constraints. It processes data natively within 
-isolated Scikit-Learn Pipeline architectures and logs performance scores (R² Metric) 
-to establish an official empirical modeling foundation.
+This script trains and evaluates a Ridge Regression baseline model.
+It uses Scikit-Learn pipelines to apply preprocessing and train the model,
+then evaluates its performance using the R² metric on the validation set.
 """
 
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
-from taxi_trip_duration.manipulation.feature_engineering import target_log, preprocess_data
+from taxi_trip_duration.manipulation.feature_engineering import (
+    target_log,
+    preprocess_data,
+)
 from taxi_trip_duration.manipulation.data_helper import (
     load_dataset,
     drop_id_features,
@@ -21,14 +23,15 @@ from taxi_trip_duration.manipulation.data_helper import (
 
 
 def ridge_model(preprocessor):
-    """Hooks the structural preprocessor block onto a linear Ridge Regression estimator.
+    """Combines the preprocessing steps with a Ridge Regression model.
 
     Args:
-        preprocessor (sklearn.compose.ColumnTransformer): Pre-configured transformation 
-            subgraph block.
+        preprocessor (sklearn.compose.ColumnTransformer): Configured
+            preprocessing transformer.
 
     Returns:
-        sklearn.pipeline.Pipeline: A unified executable modeling pipeline pipeline.
+        sklearn.pipeline.Pipeline: Pipeline containing preprocessing
+            and the Ridge Regression model.
     """
     model = Ridge(alpha=1.0)
     ridge_pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("model", model)])
@@ -38,40 +41,40 @@ def ridge_model(preprocessor):
 
 if __name__ == "__main__":
     print("#" * 50)
-    print("Initializing Baseline Ridge Regression Execution Protocol...")
+    print("Initializing Baseline Ridge Regression...")
     print("#" * 50)
-    
-    # Ingest structured datasets via relative structural layout paths
+
+    # Load the training and validation datasets
     train, val, _ = load_dataset(data_type="split")
 
-    # Isolate prediction fields from unique system logs tracking records
+    # Remove identifier columns
     train = drop_id_features(train)
     val = drop_id_features(val)
 
-    # Deconstruct timestamps to linear intervals (haversine isolated for absolute baseline purity)
-    train = preprocess_data(train, eda=False, haversine=False)
-    val = preprocess_data(val, eda=False, haversine=False)
+    # Extract features from the pickup datetime
+    train = preprocess_data(train)
+    val = preprocess_data(val)
 
-    # Normalize response target variable arrays mathematically via natural logarithms
-    train = target_log(train)
-    val = target_log(val)
+    # Apply the log1p transformation to the target variable
+    train = target_log(train, drop_original=True)
+    val = target_log(val, drop_original=True)
 
-    # Separate target response attributes out into canonical X/y notation paradigms
+    # Separate features and target values
     X_train, y_train, X_val, y_val = train_val_split(train, val)
 
-    # Resolve active model feature parameters dynamically (haversine excluded for pure baseline state)
-    categorical, numerical = cat_num_features(haversine_distance=False)
+    # Select categorical and numerical features for the baseline model
+    categorical, numerical = cat_num_features()
 
-    # Benchmark tracking loop testing scaling algorithm variances sequentially
+    # Compare StandardScaler and MinMaxScaler
     for scale in ["standard", "minmax"]:
-        print(f"\n[Evaluation Phase] Executing Pipeline Matrix Using: {scale.upper()} Scaling.")
+        print(f"\n[Evaluation Phase] Testing {scale.upper()} scaling.")
         preprocessor = preprocessing(categorical, numerical, scaling=scale)
 
-        # Initialize framework pipeline graph structures and fit models safely
+        # Build and train the pipeline
         pipeline = ridge_model(preprocessor)
         pipeline.fit(X_train, y_train)
 
-        # Generate predictions and evaluate validation data matrices via R-Squared benchmarks
+        # Predict target values and evaluate the validation set
         preds = pipeline.predict(X_val)
         score = r2_score(y_val, preds)
 
@@ -80,27 +83,27 @@ if __name__ == "__main__":
 
 
 # ==============================================================================
-#                               PIPELINE BENCHMARK RESULTS
+#                           PIPELINE BENCHMARK RESULTS
 # ==============================================================================
-# The statistical performance benchmarks of the pure baseline model architecture 
-# (isolated entirely from engineered distance metrics) are formally tracked below:
+# The following results were obtained using the baseline model without
+# engineered distance features.
 #
-# 1. Pipeline Configuration with Standard Scaling Transformation:
-#    - Preprocessing Topology: StandardScaler() on Coordinates | OneHotEncoder() on Chronological Indicators
-#    - Empirical Baseline Validation R² Score: 0.06645
+# 1. Standard Scaling:
+#    - Preprocessing: StandardScaler for numerical features and OneHotEncoder
+#      for categorical features.
+#    - Validation R² Score: 0.06645
 #
-# 2. Pipeline Configuration with MinMax Scaling Transformation:
-#    - Preprocessing Topology: MinMaxScaler() on Coordinates | OneHotEncoder() on Chronological Indicators
-#    - Empirical Baseline Validation R² Score: 0.05995
+# 2. MinMax Scaling:
+#    - Preprocessing: MinMaxScaler for numerical features and OneHotEncoder
+#      for categorical features.
+#    - Validation R² Score: 0.05995
 #
-# STRATEGIC ENGINEERING DECISION & ROADMAP DIRECTIONS:
-# ----------------------------------------------------
-# A review of initial metrics demonstrates that standard covariance scaling maps 
-# a marginally tighter linear distribution fit, outperforming MinMax variations. 
-# Standard Scaling is formally selected as the pipeline parameter moving forward.
+# DECISION AND NEXT STEPS:
+# ------------------------
+# StandardScaler achieved a slightly higher validation R² score than MinMaxScaler,
+# so it is selected for the next modeling experiments.
 #
-# To bypass the severe linear operational ceilings (~0.066), subsequent files 
-# (`explore.py` & `feature_engineering.py`) will systematically introduce complex 
-# interactive engineering metrics (e.g., Haversine metrics, network Grid Manhattan 
-# matrices, and dynamic operational speeds) to drive target accuracy goals.
+# The baseline provides a reference point for evaluating the effect of
+# additional features in explore.py and feature_engineering.py, such as
+# Haversine distance and Manhattan-style distance.
 # ==============================================================================

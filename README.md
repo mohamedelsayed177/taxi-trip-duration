@@ -46,9 +46,9 @@ taxi-trip-duration/
 │       │   ├── __init__.py
 │       │   └── test.py
 │       │
-│       └── visualization/
+│       └── eda/
 │           ├── __init__.py
-│           └── ploting.py
+│           └── plotting.py
 │
 ├── .gitignore
 ├── pyproject.toml
