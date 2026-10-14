@@ -99,8 +99,7 @@ def train_val_split(train, val):
 def cat_num_features(
     haversine_distance=False,
     manhattan_distance=False,
-    season=False,
-    pickup_bearing=False,
+    pickup_bearing=False
 ):
     """Returns the categorical and numerical feature names for the model.
 
@@ -139,8 +138,6 @@ def cat_num_features(
         numerical_features.append("haversine_distance")
     if manhattan_distance:
         numerical_features.append("manhattan_distance")
-    if season:
-        categorical_features.append("season")
     if pickup_bearing:
         numerical_features.append("pickup_bearing")
 

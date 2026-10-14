@@ -214,30 +214,6 @@ def pickup_bearing(df):
     return df
 
 
-def get_season(df):
-    """Assigns a season label based on the pickup month.
-
-    Args:
-        df (pandas.DataFrame): DataFrame containing 'pickup_month'.
-
-    Returns:
-        pandas.DataFrame: Copy containing a categorical 'season' column.
-    """
-    df = df.copy()
-
-    # Map each month to its corresponding meteorological season
-    conditions = [
-        df["pickup_month"].isin([12, 1, 2]),
-        df["pickup_month"].isin([3, 4, 5]),
-        df["pickup_month"].isin([6, 7, 8]),
-        df["pickup_month"].isin([9, 10, 11]),
-    ]
-    choices = ["Winter", "Spring", "Summer", "Fall"]
-
-    df["season"] = np.select(conditions, choices, default="Unknown")
-
-    return df
-
 
 def preprocess_data(
     df,
@@ -245,7 +221,6 @@ def preprocess_data(
     haversine=False,
     manhattan=False,
     bearing=False,
-    season=False,
 ):
     """Extracts datetime features and optionally adds geographic features.
 
@@ -257,8 +232,6 @@ def preprocess_data(
         haversine (bool, optional): Adds 'haversine_distance'. Defaults to False.
         manhattan (bool, optional): Adds 'manhattan_distance'. Defaults to False.
         bearing (bool, optional): Adds 'pickup_bearing'. Defaults to False.
-        season (bool, optional): Adds the categorical 'season' feature.
-            Defaults to False.
 
     Returns:
         pandas.DataFrame: Copy containing extracted datetime features and
@@ -274,7 +247,5 @@ def preprocess_data(
         df = manhattan_distance(df)
     if bearing:
         df = pickup_bearing(df)
-    if season:
-        df = get_season(df)
 
     return df
