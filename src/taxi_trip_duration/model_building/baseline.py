@@ -105,5 +105,5 @@ if __name__ == "__main__":
 #
 # The baseline provides a reference point for evaluating the effect of
 # additional features in explore.py and feature_engineering.py, such as
-# Haversine distance and Manhattan-style distance.
+# Haversine distance, Manhattan distance, etc...
 # ==============================================================================

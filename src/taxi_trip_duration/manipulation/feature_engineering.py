@@ -224,8 +224,8 @@ def airport_distances(df):
         df (pandas.DataFrame): Input DataFrame containing geographical coordinates.
 
     Returns:
-        pandas.DataFrame: A shallow copy of the DataFrame augmented with 6 columns
-            mapping proximity distances to specific airports in kilometers.
+        pandas.DataFrame: A copy of the DataFrame augmented with 6 columns
+            containing distances to specific airports in kilometers.
     """
     df = df.copy()
 
@@ -299,40 +299,106 @@ def time_interactions(df):
 
 
 def heavy_hitter_categories(df):
-    """Creates highly specific spatial grids and time-slot feature interactions.
-
-    Generates high-cardinality categorical interaction terms specifically designed
-    to capture localized geographical and temporal variances for linear models
-    like Ridge regression.
+    """Creates categorical features for frequently used pickup and drop-off areas.
 
     Args:
-        df (pandas.DataFrame): Input DataFrame containing spatial coordinates
-            ('pickup_latitude', 'pickup_longitude', 'dropoff_latitude',
-            'dropoff_longitude') and temporal features ('pickup_day_of_week',
-            'pickup_hour').
+        df (pandas.DataFrame): DataFrame containing pickup coordinates,
+            drop-off coordinates, and pickup time features.
 
     Returns:
-        pandas.DataFrame: A shallow copy of the DataFrame augmented with
-            'pickup_grid', 'dropoff_grid', and 'day_hour' interaction strings.
+        pandas.DataFrame: Copy with geographic grid and time-slot categories.
     """
     df = df.copy()
 
-    # Spatial Grids: Approx 1km x 1km blocks
     df["pickup_grid"] = (
         df["pickup_latitude"].round(2).astype(str)
         + "_"
         + df["pickup_longitude"].round(2).astype(str)
     )
+
     df["dropoff_grid"] = (
         df["dropoff_latitude"].round(2).astype(str)
         + "_"
         + df["dropoff_longitude"].round(2).astype(str)
     )
 
-    #  Exact Time Slots: Day + Hour (e.g., "0_8")
     df["day_hour"] = (
-        df["pickup_day_of_week"].astype(str) + "_" + df["pickup_hour"].astype(str)
+        df["pickup_day_of_week"].astype(str)
+        + "_"
+        + df["pickup_hour"].astype(str)
     )
+
+    # Represent a pickup and drop-off area combination
+    df["pickup_dropoff_grid"] = (
+        df["pickup_grid"] + "_to_" + df["dropoff_grid"]
+    )
+
+    return df
+
+
+def cyclical_time(df):
+    """Creates cyclical encodings and time-period indicators.
+
+    Args:
+        df (pandas.DataFrame): DataFrame containing pickup_hour and
+            pickup_day_of_week.
+
+    Returns:
+        pandas.DataFrame: Copy with cyclical time features and time flags.
+    """
+    df = df.copy()
+
+    # Encode hour as a circular variable
+    df["pickup_hour_sin"] = np.sin(2 * np.pi * df["pickup_hour"] / 24)
+    df["pickup_hour_cos"] = np.cos(2 * np.pi * df["pickup_hour"] / 24)
+
+    # Encode day of week as a circular variable (Monday = 0)
+    df["pickup_day_sin"] = np.sin(
+        2 * np.pi * df["pickup_day_of_week"] / 7
+    )
+    df["pickup_day_cos"] = np.cos(
+        2 * np.pi * df["pickup_day_of_week"] / 7
+    )
+
+    # Create time-period indicators
+    df["is_weekend"] = (df["pickup_day_of_week"] >= 5).astype(int)
+    df["is_night"] = (
+        (df["pickup_hour"] >= 22) | (df["pickup_hour"] < 6)
+    ).astype(int)
+
+    is_weekday = df["pickup_day_of_week"] < 5
+
+    df["is_morning_peak"] = (
+        is_weekday & df["pickup_hour"].between(7, 10)
+    ).astype(int)
+
+    df["is_evening_peak"] = (
+        is_weekday & df["pickup_hour"].between(16, 19)
+    ).astype(int)
+
+    return df
+
+
+def distance_relationships(df):
+    """Creates features describing the relationship between trip distances.
+
+    Args:
+        df (pandas.DataFrame): DataFrame containing haversine_distance
+            and manhattan_distance.
+
+    Returns:
+        pandas.DataFrame: Copy with distance ratio and distance difference.
+    """
+    df = df.copy()
+
+    df["distance_ratio"] = df["manhattan_distance"] / (
+        df["haversine_distance"] + 1e-6
+    )
+
+    df["distance_difference"] = (
+        df["manhattan_distance"] - df["haversine_distance"]
+    )
+
     return df
 
 
@@ -371,43 +437,76 @@ def preprocess_data(
     interactions=False,
     heavy_hitters=False,
     log_dist=False,
+    cyclical_time_features=False,
+    distance_relationship_features=False,
 ):
-    """Extracts datetime features and optionally adds geographic and advanced features.
+    """Applies datetime and optional geographic feature transformations.
 
     Args:
-        df (pandas.DataFrame): Input dataset containing pickup timestamps
-            and geographic coordinates.
-        eda (bool, optional): Controls retention of the original pickup
-            timestamp and creation of date and time columns. Defaults to False.
-        haversine (bool, optional): Adds 'haversine_distance'. Defaults to False.
-        manhattan (bool, optional): Adds 'manhattan_distance'. Defaults to False.
-        bearing (bool, optional): Adds 'pickup_bearing'. Defaults to False.
-        airport (bool, optional): Adds distance to major airports. Defaults to False.
-        interactions (bool, optional): Adds time-distance interactions. Defaults to False.
+        df (pandas.DataFrame): Input dataset.
+        eda (bool, optional): Retains original datetime components for EDA.
+            Defaults to False.
+        haversine (bool, optional): Adds Haversine distance.
+            Defaults to False.
+        manhattan (bool, optional): Adds Manhattan distance.
+            Defaults to False.
+        bearing (bool, optional): Adds pickup-to-drop-off bearing.
+            Defaults to False.
+        airport (bool, optional): Adds distances to nearby airports.
+            Defaults to False.
+        interactions (bool, optional): Adds rush-hour interaction features.
+            Defaults to False.
+        heavy_hitters (bool, optional): Adds geographic grid and time-slot
+            categories, including pickup-drop-off grid pairs.
+            Defaults to False.
+        log_dist (bool, optional): Adds log-scaled distance features.
+            Defaults to False.
+        cyclical_time_features (bool, optional): Adds cyclical time encodings
+            and time-period indicators. Defaults to False.
+        distance_relationship_features (bool, optional): Adds distance ratio
+            and difference features. Defaults to False.
 
     Returns:
-        pandas.DataFrame: Copy containing extracted datetime features and
-            any requested geographic or advanced features.
+        pandas.DataFrame: Transformed dataset.
     """
-    # Extract baseline datetime features first
+    if distance_relationship_features and not (
+        haversine and manhattan
+    ):
+        raise ValueError(
+            "Distance relationship features require both "
+            "Haversine and Manhattan distances."
+        )
+
     df = date_time(df, eda=eda)
 
-    # Add spatial features
+    # Create optional geographic features
     if haversine:
         df = haversine_distance(df)
+
     if manhattan:
         df = manhattan_distance(df)
+
     if bearing:
         df = pickup_bearing(df)
 
-    # Add advanced temporal and interactive features
     if airport:
         df = airport_distances(df)
+
     if interactions:
         df = time_interactions(df)
+
     if heavy_hitters:
         df = heavy_hitter_categories(df)
+
     if log_dist:
         df = log_distances(df)
+
+    # Create additional time and distance features
+    if cyclical_time_features:
+        df = cyclical_time(df)
+
+    if distance_relationship_features:
+        # Both distance columns must already exist
+        df = distance_relationships(df)
 
     return df

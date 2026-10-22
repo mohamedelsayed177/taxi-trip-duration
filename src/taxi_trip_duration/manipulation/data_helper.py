@@ -1,3 +1,4 @@
+
 """
 Data Helper Utilities for NYC Taxi Trip Duration Pipeline.
 
@@ -6,11 +7,12 @@ target separation, feature categorization, and Scikit-Learn preprocessing.
 """
 
 import os
+
 import pandas as pd
+from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
 from sklearn.impute import SimpleImputer
-from sklearn.compose import ColumnTransformer
 
 
 def load_dataset(data_type="split"):
@@ -26,7 +28,9 @@ def load_dataset(data_type="split"):
     """
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        base_path = os.path.join(current_dir, "..", "..", "..", "dataset", data_type)
+        base_path = os.path.join(
+            current_dir, "..", "..", "..", "dataset", data_type
+        )
 
         train_path = os.path.join(base_path, "train.csv")
         val_path = os.path.join(base_path, "val.csv")
@@ -104,32 +108,42 @@ def cat_num_features(
     interactions=False,
     heavy_hitters=False,
     log_dist=False,
+    cyclical_time_features=False,
+    distance_relationship_features=False,
 ):
-    """Generates lists of categorical and numerical feature names for model mapping.
+    """Generates categorical and numerical feature names for preprocessing.
 
-    Dynamically compiles feature configurations based on toggled downstream
-    engineering flags to ensure consistency during the transformation pipeline.
+    Dynamically compiles feature lists based on the enabled feature-engineering
+    options to keep the preprocessing configuration consistent.
 
     Args:
-        haversine_distance (bool, optional): If True, includes 'haversine_distance'
-            and conditional derivatives. Defaults to False.
-        manhattan_distance (bool, optional): If True, includes 'manhattan_distance'
-            and conditional derivatives. Defaults to False.
-        pickup_bearing (bool, optional): If True, includes 'pickup_bearing'.
+        haversine_distance (bool, optional): Includes Haversine distance and
+            its conditional derived features. Defaults to False.
+        manhattan_distance (bool, optional): Includes Manhattan distance and
+            its conditional derived features. Defaults to False.
+        pickup_bearing (bool, optional): Includes pickup bearing.
             Defaults to False.
-        airport (bool, optional): If True, includes multi-airport distance vectors
-            for JFK, LGA, and EWR. Defaults to False.
-        interactions (bool, optional): If True, includes temporal constraints and
-            spatiotemporal interaction terms. Defaults to False.
-        heavy_hitters (bool, optional): If True, includes high-cardinality geographic
-            grids and dense time-slot identifiers. Defaults to False.
-        log_dist (bool, optional): If True, conditionally appends log-scaled spatial
-            features for activated metrics. Defaults to False.
+        airport (bool, optional): Includes distance features for JFK, LGA,
+            and EWR airports. Defaults to False.
+        interactions (bool, optional): Includes rush-hour and enabled
+            distance interaction features. Defaults to False.
+        heavy_hitters (bool, optional): Includes geographic grid and
+            time-slot categorical features. Defaults to False.
+        log_dist (bool, optional): Includes log-transformed distance features
+            for enabled distance metrics. Defaults to False.
+        cyclical_time_features (bool, optional): Includes cyclical time
+            features and time-based categorical indicators. Defaults to False.
+        distance_relationship_features (bool, optional): Includes the ratio
+            and difference between Manhattan and Haversine distances.
+            Requires both distance features to be enabled. Defaults to False.
 
     Returns:
-        tuple[list[str], list[str]]: A two-element tuple containing:
-            - categorical_features: A list of active categorical feature strings.
-            - numerical_features: A list of active numerical feature strings.
+        tuple[list[str], list[str]]: Categorical and numerical feature names,
+            respectively.
+
+    Raises:
+        ValueError: If distance relationship features are enabled without
+            both Haversine and Manhattan distances.
     """
     # Define the original categorical and numerical features
     categorical_features = [
@@ -148,11 +162,13 @@ def cat_num_features(
         "dropoff_longitude",
     ]
 
-    # Include optional engineered features using their output column names
+    # Include optional engineered features
     if haversine_distance:
         numerical_features.append("haversine_distance")
+
     if manhattan_distance:
         numerical_features.append("manhattan_distance")
+
     if pickup_bearing:
         numerical_features.append("pickup_bearing")
 
@@ -170,18 +186,63 @@ def cat_num_features(
 
     if interactions:
         categorical_features.append("is_rush_hour")
+
         if manhattan_distance:
             numerical_features.append("rush_hour_manhattan")
+
         if haversine_distance:
             numerical_features.append("rush_hour_haversine")
 
     if heavy_hitters:
-        categorical_features.extend(["pickup_grid", "dropoff_grid", "day_hour"])
+        categorical_features.extend(
+            [
+                "pickup_grid",
+                "dropoff_grid",
+                "day_hour",
+                "pickup_dropoff_grid",
+            ]
+        )
+
     if log_dist:
         if haversine_distance:
             numerical_features.append("log_haversine")
+
         if manhattan_distance:
             numerical_features.append("log_manhattan")
+
+    if cyclical_time_features:
+        numerical_features.extend(
+            [
+                "pickup_hour_sin",
+                "pickup_hour_cos",
+                "pickup_day_sin",
+                "pickup_day_cos",
+            ]
+        )
+
+        categorical_features.extend(
+            [
+                "is_weekend",
+                "is_night",
+                "is_morning_peak",
+                "is_evening_peak",
+            ]
+        )
+
+    # Validate and include distance relationship features
+    if distance_relationship_features:
+        if not (haversine_distance and manhattan_distance):
+            raise ValueError(
+                "Distance relationship features require both "
+                "Haversine and Manhattan distances."
+            )
+
+        numerical_features.extend(
+            [
+                "distance_ratio",
+                "distance_difference",
+            ]
+        )
 
     return categorical_features, numerical_features
 
@@ -207,7 +268,9 @@ def preprocessing(categorical_features, numerical_features, scaling="standard"):
     elif scaling == "minmax":
         scaler = MinMaxScaler()
     else:
-        raise ValueError("Invalid scaling strategy. Select 'standard' or 'minmax'.")
+        raise ValueError(
+            "Invalid scaling strategy. Select 'standard' or 'minmax'."
+        )
 
     # Encode categorical features and scale numerical features
     categorical_transformer = Pipeline(
