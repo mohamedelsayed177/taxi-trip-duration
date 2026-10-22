@@ -2,7 +2,7 @@
 Feature Engineering and Mathematical Transformations for NYC Taxi Analysis.
 
 This module provides target log transformation, datetime feature extraction,
-and optional geographic feature calculations.
+and optional geographic and advanced temporal feature calculations.
 """
 
 import pandas as pd
@@ -214,14 +214,165 @@ def pickup_bearing(df):
     return df
 
 
+def airport_distances(df):
+    """Calculates the proximity of pickups and dropoffs to major NYC airports.
+
+    Computes proximity vectors using the great-circle Haversine formula relative to
+    John F. Kennedy (JFK), LaGuardia (LGA), and Newark Liberty (EWR) airports.
+
+    Args:
+        df (pandas.DataFrame): Input DataFrame containing geographical coordinates.
+
+    Returns:
+        pandas.DataFrame: A shallow copy of the DataFrame augmented with 6 columns
+            mapping proximity distances to specific airports in kilometers.
+    """
+    df = df.copy()
+
+    # Major NYC Airport Coordinates (Latitude, Longitude)
+    jfk_coords = (40.6413, -73.7781)
+    lga_coords = (40.7769, -73.8740)
+    ewr_coords = (40.6895, -74.1745)
+
+    def distance_to_fixed_point(lat_series, lon_series, fixed_lat, fixed_lon):
+        """Helper to calculate haversine distance to a specific coordinate."""
+        lat1, lon1 = np.radians(lat_series), np.radians(lon_series)
+        lat2, lon2 = np.radians(fixed_lat), np.radians(fixed_lon)
+
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+
+        a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+        a = np.clip(a, 0, 1)
+        return EARTH_RADIUS_KM * 2 * np.arcsin(np.sqrt(a))
+
+    # Distances from Pickup
+    df["pickup_jfk_distance"] = distance_to_fixed_point(
+        df["pickup_latitude"], df["pickup_longitude"], *jfk_coords
+    )
+    df["pickup_lga_distance"] = distance_to_fixed_point(
+        df["pickup_latitude"], df["pickup_longitude"], *lga_coords
+    )
+    df["pickup_ewr_distance"] = distance_to_fixed_point(
+        df["pickup_latitude"], df["pickup_longitude"], *ewr_coords
+    )
+
+    # Distances from Dropoff
+    df["dropoff_jfk_distance"] = distance_to_fixed_point(
+        df["dropoff_latitude"], df["dropoff_longitude"], *jfk_coords
+    )
+    df["dropoff_lga_distance"] = distance_to_fixed_point(
+        df["dropoff_latitude"], df["dropoff_longitude"], *lga_coords
+    )
+    df["dropoff_ewr_distance"] = distance_to_fixed_point(
+        df["dropoff_latitude"], df["dropoff_longitude"], *ewr_coords
+    )
+
+    return df
+
+
+def time_interactions(df):
+    """Creates rush hour flags and interacts them with calculated distances.
+
+    Args:
+        df (pandas.DataFrame): DataFrame containing datetime and distance features.
+
+    Returns:
+        pandas.DataFrame: Copy augmented with traffic proxy interactions.
+    """
+    df = df.copy()
+
+    # Rush Hour definition: Weekdays (Mon-Fri -> 0-4) AND peak hours (7-10 AM, 4-7 PM)
+    is_weekday = df["pickup_day_of_week"] < 5
+    is_peak_hour = df["pickup_hour"].isin([7, 8, 9, 10, 16, 17, 18, 19])
+
+    df["is_rush_hour"] = (is_weekday & is_peak_hour).astype(int)
+
+    # Interact rush hour flag with spatial distances
+    if "manhattan_distance" in df.columns:
+        df["rush_hour_manhattan"] = df["is_rush_hour"] * df["manhattan_distance"]
+
+    if "haversine_distance" in df.columns:
+        df["rush_hour_haversine"] = df["is_rush_hour"] * df["haversine_distance"]
+
+    return df
+
+
+def heavy_hitter_categories(df):
+    """Creates highly specific spatial grids and time-slot feature interactions.
+
+    Generates high-cardinality categorical interaction terms specifically designed
+    to capture localized geographical and temporal variances for linear models
+    like Ridge regression.
+
+    Args:
+        df (pandas.DataFrame): Input DataFrame containing spatial coordinates
+            ('pickup_latitude', 'pickup_longitude', 'dropoff_latitude',
+            'dropoff_longitude') and temporal features ('pickup_day_of_week',
+            'pickup_hour').
+
+    Returns:
+        pandas.DataFrame: A shallow copy of the DataFrame augmented with
+            'pickup_grid', 'dropoff_grid', and 'day_hour' interaction strings.
+    """
+    df = df.copy()
+
+    # Spatial Grids: Approx 1km x 1km blocks
+    df["pickup_grid"] = (
+        df["pickup_latitude"].round(2).astype(str)
+        + "_"
+        + df["pickup_longitude"].round(2).astype(str)
+    )
+    df["dropoff_grid"] = (
+        df["dropoff_latitude"].round(2).astype(str)
+        + "_"
+        + df["dropoff_longitude"].round(2).astype(str)
+    )
+
+    #  Exact Time Slots: Day + Hour (e.g., "0_8")
+    df["day_hour"] = (
+        df["pickup_day_of_week"].astype(str) + "_" + df["pickup_hour"].astype(str)
+    )
+    return df
+
+
+def log_distances(df):
+    """Applies a log1p transformation to geographic distance metrics.
+
+    Reduces the right-skewness of raw distance features to better align their
+    variance with log-transformed target variables (e.g., log-trip duration).
+
+    Args:
+        df (pandas.DataFrame): Input DataFrame optionally containing
+            'haversine_distance' and 'manhattan_distance' columns.
+
+    Returns:
+        pandas.DataFrame: A shallow copy of the DataFrame with conditionally
+            added 'log_haversine' and 'log_manhattan' columns.
+    """
+    df = df.copy()
+
+    if "haversine_distance" in df.columns:
+        df["log_haversine"] = np.log1p(df["haversine_distance"])
+
+    if "manhattan_distance" in df.columns:
+        df["log_manhattan"] = np.log1p(df["manhattan_distance"])
+
+    return df
+
+
 def preprocess_data(
     df,
     eda=False,
     haversine=False,
     manhattan=False,
     bearing=False,
+    airport=False,
+    interactions=False,
+    heavy_hitters=False,
+    log_dist=False,
 ):
-    """Extracts datetime features and optionally adds geographic features.
+    """Extracts datetime features and optionally adds geographic and advanced features.
 
     Args:
         df (pandas.DataFrame): Input dataset containing pickup timestamps
@@ -231,20 +382,32 @@ def preprocess_data(
         haversine (bool, optional): Adds 'haversine_distance'. Defaults to False.
         manhattan (bool, optional): Adds 'manhattan_distance'. Defaults to False.
         bearing (bool, optional): Adds 'pickup_bearing'. Defaults to False.
+        airport (bool, optional): Adds distance to major airports. Defaults to False.
+        interactions (bool, optional): Adds time-distance interactions. Defaults to False.
 
     Returns:
         pandas.DataFrame: Copy containing extracted datetime features and
-            any requested geographic features.
+            any requested geographic or advanced features.
     """
-    # Extract datetime features first
+    # Extract baseline datetime features first
     df = date_time(df, eda=eda)
 
-    # Add optional geographic and seasonal features
+    # Add spatial features
     if haversine:
         df = haversine_distance(df)
     if manhattan:
         df = manhattan_distance(df)
     if bearing:
         df = pickup_bearing(df)
+
+    # Add advanced temporal and interactive features
+    if airport:
+        df = airport_distances(df)
+    if interactions:
+        df = time_interactions(df)
+    if heavy_hitters:
+        df = heavy_hitter_categories(df)
+    if log_dist:
+        df = log_distances(df)
 
     return df

@@ -97,22 +97,39 @@ def train_val_split(train, val):
 
 
 def cat_num_features(
-    haversine_distance=False, manhattan_distance=False, pickup_bearing=False
+    haversine_distance=False,
+    manhattan_distance=False,
+    pickup_bearing=False,
+    airport=False,
+    interactions=False,
+    heavy_hitters=False,
+    log_dist=False,
 ):
-    """Returns the categorical and numerical feature names for the model.
+    """Generates lists of categorical and numerical feature names for model mapping.
+
+    Dynamically compiles feature configurations based on toggled downstream
+    engineering flags to ensure consistency during the transformation pipeline.
 
     Args:
-        haversine_distance (bool, optional): Include 'haversine_distance'
-            among numerical features. Defaults to False.
-        manhattan_distance (bool, optional): Include 'manhattan_distance'
-            among numerical features. Defaults to False.
-        season (bool, optional): Include 'season' among categorical features.
+        haversine_distance (bool, optional): If True, includes 'haversine_distance'
+            and conditional derivatives. Defaults to False.
+        manhattan_distance (bool, optional): If True, includes 'manhattan_distance'
+            and conditional derivatives. Defaults to False.
+        pickup_bearing (bool, optional): If True, includes 'pickup_bearing'.
             Defaults to False.
-        pickup_bearing (bool, optional): Include 'pickup_bearing'
-            among numerical features. Defaults to False.
+        airport (bool, optional): If True, includes multi-airport distance vectors
+            for JFK, LGA, and EWR. Defaults to False.
+        interactions (bool, optional): If True, includes temporal constraints and
+            spatiotemporal interaction terms. Defaults to False.
+        heavy_hitters (bool, optional): If True, includes high-cardinality geographic
+            grids and dense time-slot identifiers. Defaults to False.
+        log_dist (bool, optional): If True, conditionally appends log-scaled spatial
+            features for activated metrics. Defaults to False.
 
     Returns:
-        tuple: (categorical_features, numerical_features).
+        tuple[list[str], list[str]]: A two-element tuple containing:
+            - categorical_features: A list of active categorical feature strings.
+            - numerical_features: A list of active numerical feature strings.
     """
     # Define the original categorical and numerical features
     categorical_features = [
@@ -138,6 +155,33 @@ def cat_num_features(
         numerical_features.append("manhattan_distance")
     if pickup_bearing:
         numerical_features.append("pickup_bearing")
+
+    if airport:
+        numerical_features.extend(
+            [
+                "pickup_jfk_distance",
+                "pickup_lga_distance",
+                "pickup_ewr_distance",
+                "dropoff_jfk_distance",
+                "dropoff_lga_distance",
+                "dropoff_ewr_distance",
+            ]
+        )
+
+    if interactions:
+        categorical_features.append("is_rush_hour")
+        if manhattan_distance:
+            numerical_features.append("rush_hour_manhattan")
+        if haversine_distance:
+            numerical_features.append("rush_hour_haversine")
+
+    if heavy_hitters:
+        categorical_features.extend(["pickup_grid", "dropoff_grid", "day_hour"])
+    if log_dist:
+        if haversine_distance:
+            numerical_features.append("log_haversine")
+        if manhattan_distance:
+            numerical_features.append("log_manhattan")
 
     return categorical_features, numerical_features
 
