@@ -107,9 +107,13 @@ def run_experiment(train, val, config):
     pipeline = ridge_model(preprocessor)
     pipeline.fit(X_train, y_train)
 
-    predictions = pipeline.predict(X_val)
+    train_predictions = pipeline.predict(X_train)
+    val_predictions = pipeline.predict(X_val)
 
-    return r2_score(y_val, predictions)
+    train_score = r2_score(y_train, train_predictions)
+    val_score = r2_score(y_val, val_predictions)
+
+    return train_score, val_score # Return as a tuple
 
 
 if __name__ == "__main__":
@@ -189,17 +193,21 @@ if __name__ == "__main__":
     print("=" * 60)
 
     for name, config in experiments.items():
-        score = run_experiment(train, val, config)
-        results[name] = score
+        train_score, val_score = run_experiment(train, val, config)
+        # Store both train and validation scores as a tuple
+        results[name] = (train_score, val_score)
 
-        print(f"{name:<35} Validation R²: {score:.5f}")
+        print(f"{name:<35} Train R²: {train_score:.5f} | Val R²: {val_score:.5f}")
 
     print("=" * 60)
 
-    best_experiment = max(results, key=results.get)
+    # Find the configuration with the highest validation R² score
+    best_experiment = max(results, key=lambda name: results[name][1])
+    best_train_r2, best_val_r2 = results[best_experiment]
 
     print(f"Best configuration: {best_experiment}")
-    print(f"Best validation R²: {results[best_experiment]:.5f}")
+    print(f"Best train R²:      {best_train_r2:.5f}")
+    print(f"Best validation R²: {best_val_r2:.5f}")
 
 
 
@@ -207,14 +215,15 @@ if __name__ == "__main__":
 # ============================================================
 # NYC TAXI TRIP DURATION - FEATURE EXPERIMENTS
 # ============================================================
-# Baseline                            Validation R²: 0.06645
-# Distance Features                   Validation R²: 0.38955
-# Distance + Bearing + Airport        Validation R²: 0.42380
-# Add Time Interactions               Validation R²: 0.42549
-# Add Heavy Hitters                   Validation R²: 0.66113
-# Add Log Distances                   Validation R²: 0.71050
-# Add Cyclical Time Features          Validation R²: 0.71050
-# Full Configuration                  Validation R²: 0.71223
+# Baseline                            Train R²: 0.06436 | Val R²: 0.06645
+# Distance Features                   Train R²: 0.35409 | Val R²: 0.38955
+# Distance + Bearing + Airport        Train R²: 0.40152 | Val R²: 0.42380
+# Add Time Interactions               Train R²: 0.40604 | Val R²: 0.42549
+# Add Heavy Hitters                   Train R²: 0.68603 | Val R²: 0.66113
+# Add Log Distances                   Train R²: 0.72561 | Val R²: 0.71050
+# Add Cyclical Time Features          Train R²: 0.72554 | Val R²: 0.71050
+# Full Configuration                  Train R²: 0.72809 | Val R²: 0.71223
 # ============================================================
 # Best configuration: Full Configuration
+# Best train R²:      0.72809
 # Best validation R²: 0.71223

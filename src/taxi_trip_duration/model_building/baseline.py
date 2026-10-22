@@ -74,11 +74,15 @@ if __name__ == "__main__":
         pipeline = ridge_model(preprocessor)
         pipeline.fit(X_train, y_train)
 
-        # Predict target values and evaluate the validation set
-        preds = pipeline.predict(X_val)
-        score = r2_score(y_val, preds)
+        # Predict target values and evaluate BOTH sets
+        train_preds = pipeline.predict(X_train)
+        val_preds = pipeline.predict(X_val)
+        
+        train_score = r2_score(y_train, train_preds)
+        val_score = r2_score(y_val, val_preds)
 
-        print(f">> Baseline Validation R² Score with {scale} scaling: {score:.5f}")
+        print(f">> Baseline Training R² Score with {scale} scaling: {train_score:.5f}")
+        print(f">> Baseline Validation R² Score with {scale} scaling: {val_score:.5f}")
         print("-" * 50)
 
 
@@ -91,11 +95,13 @@ if __name__ == "__main__":
 # 1. Standard Scaling:
 #    - Preprocessing: StandardScaler for numerical features and OneHotEncoder
 #      for categorical features.
+#    - Training R² Score : 0.06436
 #    - Validation R² Score: 0.06645
 #
 # 2. MinMax Scaling:
 #    - Preprocessing: MinMaxScaler for numerical features and OneHotEncoder
 #      for categorical features.
+#    - Training R² Score : 0.06152
 #    - Validation R² Score: 0.05995
 #
 # DECISION AND NEXT STEPS:
