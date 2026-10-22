@@ -70,7 +70,7 @@ def drop_id_features(df):
         pandas.DataFrame: Copy without the identifier columns.
     """
     df = df.copy()
-    df.drop(columns=["id", "vendor_id"],errors="ignore",inplace=True)
+    df.drop(columns=["id", "vendor_id"], errors="ignore", inplace=True)
 
     return df
 
@@ -97,9 +97,7 @@ def train_val_split(train, val):
 
 
 def cat_num_features(
-    haversine_distance=False,
-    manhattan_distance=False,
-    pickup_bearing=False
+    haversine_distance=False, manhattan_distance=False, pickup_bearing=False
 ):
     """Returns the categorical and numerical feature names for the model.
 

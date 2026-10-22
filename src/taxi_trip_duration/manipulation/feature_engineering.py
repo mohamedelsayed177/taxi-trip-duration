@@ -214,7 +214,6 @@ def pickup_bearing(df):
     return df
 
 
-
 def preprocess_data(
     df,
     eda=False,
