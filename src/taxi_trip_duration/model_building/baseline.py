@@ -77,7 +77,7 @@ if __name__ == "__main__":
         # Predict target values and evaluate BOTH sets
         train_preds = pipeline.predict(X_train)
         val_preds = pipeline.predict(X_val)
-        
+
         train_score = r2_score(y_train, train_preds)
         val_score = r2_score(y_val, val_preds)
 

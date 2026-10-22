@@ -323,15 +323,11 @@ def heavy_hitter_categories(df):
     )
 
     df["day_hour"] = (
-        df["pickup_day_of_week"].astype(str)
-        + "_"
-        + df["pickup_hour"].astype(str)
+        df["pickup_day_of_week"].astype(str) + "_" + df["pickup_hour"].astype(str)
     )
 
     # Represent a pickup and drop-off area combination
-    df["pickup_dropoff_grid"] = (
-        df["pickup_grid"] + "_to_" + df["dropoff_grid"]
-    )
+    df["pickup_dropoff_grid"] = df["pickup_grid"] + "_to_" + df["dropoff_grid"]
 
     return df
 
@@ -353,28 +349,18 @@ def cyclical_time(df):
     df["pickup_hour_cos"] = np.cos(2 * np.pi * df["pickup_hour"] / 24)
 
     # Encode day of week as a circular variable (Monday = 0)
-    df["pickup_day_sin"] = np.sin(
-        2 * np.pi * df["pickup_day_of_week"] / 7
-    )
-    df["pickup_day_cos"] = np.cos(
-        2 * np.pi * df["pickup_day_of_week"] / 7
-    )
+    df["pickup_day_sin"] = np.sin(2 * np.pi * df["pickup_day_of_week"] / 7)
+    df["pickup_day_cos"] = np.cos(2 * np.pi * df["pickup_day_of_week"] / 7)
 
     # Create time-period indicators
     df["is_weekend"] = (df["pickup_day_of_week"] >= 5).astype(int)
-    df["is_night"] = (
-        (df["pickup_hour"] >= 22) | (df["pickup_hour"] < 6)
-    ).astype(int)
+    df["is_night"] = ((df["pickup_hour"] >= 22) | (df["pickup_hour"] < 6)).astype(int)
 
     is_weekday = df["pickup_day_of_week"] < 5
 
-    df["is_morning_peak"] = (
-        is_weekday & df["pickup_hour"].between(7, 10)
-    ).astype(int)
+    df["is_morning_peak"] = (is_weekday & df["pickup_hour"].between(7, 10)).astype(int)
 
-    df["is_evening_peak"] = (
-        is_weekday & df["pickup_hour"].between(16, 19)
-    ).astype(int)
+    df["is_evening_peak"] = (is_weekday & df["pickup_hour"].between(16, 19)).astype(int)
 
     return df
 
@@ -391,13 +377,9 @@ def distance_relationships(df):
     """
     df = df.copy()
 
-    df["distance_ratio"] = df["manhattan_distance"] / (
-        df["haversine_distance"] + 1e-6
-    )
+    df["distance_ratio"] = df["manhattan_distance"] / (df["haversine_distance"] + 1e-6)
 
-    df["distance_difference"] = (
-        df["manhattan_distance"] - df["haversine_distance"]
-    )
+    df["distance_difference"] = df["manhattan_distance"] - df["haversine_distance"]
 
     return df
 
@@ -469,9 +451,7 @@ def preprocess_data(
     Returns:
         pandas.DataFrame: Transformed dataset.
     """
-    if distance_relationship_features and not (
-        haversine and manhattan
-    ):
+    if distance_relationship_features and not (haversine and manhattan):
         raise ValueError(
             "Distance relationship features require both "
             "Haversine and Manhattan distances."

@@ -1,4 +1,3 @@
-
 """
 NYC Taxi Trip Duration - Feature Engineering Experiments.
 
@@ -79,9 +78,7 @@ def run_experiment(train, val, config):
         "interactions": config.get("interactions", False),
         "heavy_hitters": config.get("heavy_hitters", False),
         "log_dist": config.get("log_dist", False),
-        "cyclical_time_features": config.get(
-            "cyclical_time_features", False
-        ),
+        "cyclical_time_features": config.get("cyclical_time_features", False),
         "distance_relationship_features": config.get(
             "distance_relationship_features", False
         ),
@@ -94,8 +91,7 @@ def run_experiment(train, val, config):
 
     if missing_features:
         raise ValueError(
-            f"Selected features missing from training data: "
-            f"{sorted(missing_features)}"
+            f"Selected features missing from training data: {sorted(missing_features)}"
         )
 
     preprocessor = preprocessing(
@@ -113,16 +109,14 @@ def run_experiment(train, val, config):
     train_score = r2_score(y_train, train_predictions)
     val_score = r2_score(y_val, val_predictions)
 
-    return train_score, val_score # Return as a tuple
+    return train_score, val_score  # Return as a tuple
 
 
 if __name__ == "__main__":
     train, val, _ = load_dataset(data_type="split")
 
     if train is None or val is None:
-        raise RuntimeError(
-            "Failed to load the training and validation datasets."
-        )
+        raise RuntimeError("Failed to load the training and validation datasets.")
 
     train = drop_id_features(train)
     val = drop_id_features(val)
@@ -208,8 +202,6 @@ if __name__ == "__main__":
     print(f"Best configuration: {best_experiment}")
     print(f"Best train R²:      {best_train_r2:.5f}")
     print(f"Best validation R²: {best_val_r2:.5f}")
-
-
 
 
 # ============================================================

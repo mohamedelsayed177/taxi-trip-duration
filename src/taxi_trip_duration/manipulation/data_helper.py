@@ -1,4 +1,3 @@
-
 """
 Data Helper Utilities for NYC Taxi Trip Duration Pipeline.
 
@@ -28,9 +27,7 @@ def load_dataset(data_type="split"):
     """
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        base_path = os.path.join(
-            current_dir, "..", "..", "..", "dataset", data_type
-        )
+        base_path = os.path.join(current_dir, "..", "..", "..", "dataset", data_type)
 
         train_path = os.path.join(base_path, "train.csv")
         val_path = os.path.join(base_path, "val.csv")
@@ -268,9 +265,7 @@ def preprocessing(categorical_features, numerical_features, scaling="standard"):
     elif scaling == "minmax":
         scaler = MinMaxScaler()
     else:
-        raise ValueError(
-            "Invalid scaling strategy. Select 'standard' or 'minmax'."
-        )
+        raise ValueError("Invalid scaling strategy. Select 'standard' or 'minmax'.")
 
     # Encode categorical features and scale numerical features
     categorical_transformer = Pipeline(
