@@ -132,7 +132,7 @@ def cat_num_features(
             features and time-based categorical indicators. Defaults to False.
         distance_relationship_features (bool, optional): Includes the ratio
             and difference between Manhattan and Haversine distances.
-            Requires both distance features to be enabled. Defaults to False.
+            Requires both distance features. Defaults to False.
 
     Returns:
         tuple[list[str], list[str]]: Categorical and numerical feature names,

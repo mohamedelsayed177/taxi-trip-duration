@@ -298,28 +298,38 @@ def time_interactions(df):
     return df
 
 
-def heavy_hitter_categories(df):
-    """Creates categorical features for frequently used pickup and drop-off areas.
+def heavy_hitter_categories(df, grid_precision=2):
+    """Creates categorical features for pickup and drop-off locations.
 
-    Args:
-        df (pandas.DataFrame): DataFrame containing pickup coordinates,
-            drop-off coordinates, and pickup time features.
+        Rounds pickup and drop-off coordinates to the specified decimal
+        precision to create geographic grid categories. Also creates
+        categories representing the pickup day and hour, as well as
+        combinations of pickup and drop-off grids.
 
-    Returns:
-        pandas.DataFrame: Copy with geographic grid and time-slot categories.
+        Args:
+            df (pandas.DataFrame): DataFrame containing pickup and drop-off
+                coordinates, 'pickup_day_of_week', and 'pickup_hour'.
+            grid_precision (int, optional): Number of decimal places used
+                to round geographic coordinates. Defaults to 2.
+
+        Returns:
+            pandas.DataFrame: Copy of the input DataFrame augmented with
+                'pickup_grid', 'dropoff_grid', 'day_hour', and
+                'pickup_dropoff_grid' columns.
     """
+    
     df = df.copy()
 
     df["pickup_grid"] = (
-        df["pickup_latitude"].round(2).astype(str)
+        df["pickup_latitude"].round(grid_precision).astype(str)
         + "_"
-        + df["pickup_longitude"].round(2).astype(str)
+        + df["pickup_longitude"].round(grid_precision).astype(str)
     )
 
     df["dropoff_grid"] = (
-        df["dropoff_latitude"].round(2).astype(str)
+        df["dropoff_latitude"].round(grid_precision).astype(str)
         + "_"
-        + df["dropoff_longitude"].round(2).astype(str)
+        + df["dropoff_longitude"].round(grid_precision).astype(str)
     )
 
     df["day_hour"] = (
@@ -395,8 +405,8 @@ def log_distances(df):
             'haversine_distance' and 'manhattan_distance' columns.
 
     Returns:
-        pandas.DataFrame: A shallow copy of the DataFrame with conditionally
-            added 'log_haversine' and 'log_manhattan' columns.
+        pandas.DataFrame: Copy of the input DataFrame, augmented with
+            'log_haversine' and/or 'log_manhattan' for available distance columns.
     """
     df = df.copy()
 
@@ -421,35 +431,58 @@ def preprocess_data(
     log_dist=False,
     cyclical_time_features=False,
     distance_relationship_features=False,
+    grid_precision=2,
 ):
-    """Applies datetime and optional geographic feature transformations.
+    
+    """Applies datetime and optional feature transformations.
+
+    Extracts temporal features and optionally generates geographic
+    distances, bearing, airport proximity, interaction features,
+    categorical geographic grids, and distance relationship features.
 
     Args:
-        df (pandas.DataFrame): Input dataset.
-        eda (bool, optional): Retains original datetime components for EDA.
+        df (pandas.DataFrame): Input dataset containing 'pickup_datetime'
+            and the coordinate columns required by the selected features.
+        eda (bool, optional): Retains the original pickup timestamp and
+            adds date and time representations for exploration.
+            Otherwise, removes the original timestamp. Defaults to False.
+        haversine (bool, optional): Adds great-circle distance between
+            pickup and drop-off coordinates in kilometers.
             Defaults to False.
-        haversine (bool, optional): Adds Haversine distance.
+        manhattan (bool, optional): Adds Manhattan-style distance
+            approximated using north-south and east-west distances.
             Defaults to False.
-        manhattan (bool, optional): Adds Manhattan distance.
+        bearing (bool, optional): Adds the initial bearing from pickup
+            to drop-off in degrees. Defaults to False.
+        airport (bool, optional): Adds pickup and drop-off distances
+            to JFK, LGA, and EWR airports. Defaults to False.
+        interactions (bool, optional): Adds a rush-hour indicator and
+            interactions with available geographic distance features.
             Defaults to False.
-        bearing (bool, optional): Adds pickup-to-drop-off bearing.
+        heavy_hitters (bool, optional): Adds geographic grid categories,
+            pickup-drop-off grid combinations, and day-hour categories.
             Defaults to False.
-        airport (bool, optional): Adds distances to nearby airports.
+        log_dist (bool, optional): Adds log1p-transformed versions of
+            available Haversine and Manhattan distances.
             Defaults to False.
-        interactions (bool, optional): Adds rush-hour interaction features.
+        cyclical_time_features (bool, optional): Adds cyclical encodings
+            for pickup hour and weekday, along with weekend, night,
+            morning-peak, and evening-peak indicators.
             Defaults to False.
-        heavy_hitters (bool, optional): Adds geographic grid and time-slot
-            categories, including pickup-drop-off grid pairs.
-            Defaults to False.
-        log_dist (bool, optional): Adds log-scaled distance features.
-            Defaults to False.
-        cyclical_time_features (bool, optional): Adds cyclical time encodings
-            and time-period indicators. Defaults to False.
-        distance_relationship_features (bool, optional): Adds distance ratio
-            and difference features. Defaults to False.
+        distance_relationship_features (bool, optional): Adds the ratio
+            and difference between Haversine and Manhattan distances.
+            Requires both distance features. Defaults to False.
+        grid_precision (int, optional): Number of decimal places used
+            to round geographic coordinates when heavy_hitters=True.
+            Defaults to 2.
 
     Returns:
-        pandas.DataFrame: Transformed dataset.
+        pandas.DataFrame: Copy of the input dataset augmented with
+            the requested temporal and engineered features.
+
+    Raises:
+        ValueError: If distance relationship features are enabled
+            without both Haversine and Manhattan distances.
     """
     if distance_relationship_features and not (haversine and manhattan):
         raise ValueError(
@@ -459,7 +492,7 @@ def preprocess_data(
 
     df = date_time(df, eda=eda)
 
-    # Create optional geographic features
+    # Create geographic features
     if haversine:
         df = haversine_distance(df)
 
@@ -472,21 +505,26 @@ def preprocess_data(
     if airport:
         df = airport_distances(df)
 
+    # Create rush-hour interactions
     if interactions:
         df = time_interactions(df)
 
+    # Create geographic grid and time-slot categories
     if heavy_hitters:
-        df = heavy_hitter_categories(df)
+        df = heavy_hitter_categories(
+            df,
+            grid_precision=grid_precision,
+        )
 
+    # Create log-transformed distance features
     if log_dist:
         df = log_distances(df)
 
-    # Create additional time and distance features
+    # Create temporal and distance-relationship features
     if cyclical_time_features:
         df = cyclical_time(df)
 
     if distance_relationship_features:
-        # Both distance columns must already exist
         df = distance_relationships(df)
 
     return df
