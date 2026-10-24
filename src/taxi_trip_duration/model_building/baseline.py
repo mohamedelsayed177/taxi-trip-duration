@@ -6,19 +6,20 @@ It uses Scikit-Learn pipelines to apply preprocessing and train the model,
 then evaluates its performance using the R² metric on the validation set.
 """
 
-from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
-from taxi_trip_duration.manipulation.feature_engineering import (
-    target_log,
-    preprocess_data,
-)
+from sklearn.pipeline import Pipeline
+
 from taxi_trip_duration.manipulation.data_helper import (
-    load_dataset,
-    drop_id_features,
-    train_val_split,
     cat_num_features,
+    drop_id_features,
+    load_dataset,
     preprocessing,
+    train_val_split,
+)
+from taxi_trip_duration.manipulation.feature_engineering import (
+    preprocess_data,
+    target_log,
 )
 
 

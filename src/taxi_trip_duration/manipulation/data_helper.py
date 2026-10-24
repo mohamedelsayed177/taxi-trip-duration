@@ -9,9 +9,9 @@ import os
 
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
 from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder, StandardScaler
 
 
 def load_dataset(data_type="split"):
@@ -40,10 +40,9 @@ def load_dataset(data_type="split"):
 
         return train, val, test
 
-    except Exception as e:
+    except (OSError, pd.errors.ParserError) as e:
         print(f"Error loading datasets: {e}")
         return None, None, None
-
 
 def checking_data(df):
     """Prints the shape, missing-value count, and duplicate-row count.

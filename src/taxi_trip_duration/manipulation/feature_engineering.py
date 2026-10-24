@@ -5,9 +5,8 @@ This module provides target log transformation, datetime feature extraction,
 and optional geographic and advanced temporal feature calculations.
 """
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 
 # Mean Earth radius in kilometers, used for geographic distance calculations
 EARTH_RADIUS_KM = 6371.0
@@ -301,23 +300,23 @@ def time_interactions(df):
 def heavy_hitter_categories(df, grid_precision=2):
     """Creates categorical features for pickup and drop-off locations.
 
-        Rounds pickup and drop-off coordinates to the specified decimal
-        precision to create geographic grid categories. Also creates
-        categories representing the pickup day and hour, as well as
-        combinations of pickup and drop-off grids.
+    Rounds pickup and drop-off coordinates to the specified decimal
+    precision to create geographic grid categories. Also creates
+    categories representing the pickup day and hour, as well as
+    combinations of pickup and drop-off grids.
 
-        Args:
-            df (pandas.DataFrame): DataFrame containing pickup and drop-off
-                coordinates, 'pickup_day_of_week', and 'pickup_hour'.
-            grid_precision (int, optional): Number of decimal places used
-                to round geographic coordinates. Defaults to 2.
+    Args:
+        df (pandas.DataFrame): DataFrame containing pickup and drop-off
+            coordinates, 'pickup_day_of_week', and 'pickup_hour'.
+        grid_precision (int, optional): Number of decimal places used
+            to round geographic coordinates. Defaults to 2.
 
-        Returns:
-            pandas.DataFrame: Copy of the input DataFrame augmented with
-                'pickup_grid', 'dropoff_grid', 'day_hour', and
-                'pickup_dropoff_grid' columns.
+    Returns:
+        pandas.DataFrame: Copy of the input DataFrame augmented with
+            'pickup_grid', 'dropoff_grid', 'day_hour', and
+            'pickup_dropoff_grid' columns.
     """
-    
+
     df = df.copy()
 
     df["pickup_grid"] = (
@@ -433,7 +432,6 @@ def preprocess_data(
     distance_relationship_features=False,
     grid_precision=2,
 ):
-    
     """Applies datetime and optional feature transformations.
 
     Extracts temporal features and optionally generates geographic

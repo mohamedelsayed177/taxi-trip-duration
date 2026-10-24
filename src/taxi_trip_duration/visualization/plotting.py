@@ -6,8 +6,8 @@ geographic distributions, and enriched deep-dive insights.
 """
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+import seaborn as sns
 
 # Set global seaborn styling
 sns.set_style("whitegrid")
@@ -15,7 +15,7 @@ sns.set_style("whitegrid")
 
 def plot_target_distribution(df):
     """Plot raw trip duration and its log1p transformation."""
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    _ , axes = plt.subplots(1, 2, figsize=(15, 5))
 
     # Plot 1: Focus on trips under two hours.
     sns.histplot(

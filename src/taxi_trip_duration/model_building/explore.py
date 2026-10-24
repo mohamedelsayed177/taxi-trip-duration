@@ -6,20 +6,20 @@ Regression with alpha=1.0. Compares training and validation R² scores
 on the log-transformed trip duration.
 """
 
-from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
+from sklearn.pipeline import Pipeline
 
-from taxi_trip_duration.manipulation.feature_engineering import (
-    target_log,
-    preprocess_data,
-)
 from taxi_trip_duration.manipulation.data_helper import (
-    load_dataset,
-    drop_id_features,
-    train_val_split,
     cat_num_features,
+    drop_id_features,
+    load_dataset,
     preprocessing,
+    train_val_split,
+)
+from taxi_trip_duration.manipulation.feature_engineering import (
+    preprocess_data,
+    target_log,
 )
 
 
@@ -136,19 +136,16 @@ if __name__ == "__main__":
 
     experiments = {
         "Baseline": {},
-
         "Distance Features": {
             "haversine": True,
             "manhattan": True,
         },
-
         "Distance + Bearing + Airport": {
             "haversine": True,
             "manhattan": True,
             "bearing": True,
             "airport": True,
         },
-
         "Add Time Interactions": {
             "haversine": True,
             "manhattan": True,
@@ -156,7 +153,6 @@ if __name__ == "__main__":
             "airport": True,
             "interactions": True,
         },
-
         "Add Heavy Hitters": {
             "haversine": True,
             "manhattan": True,
@@ -165,7 +161,6 @@ if __name__ == "__main__":
             "interactions": True,
             "heavy_hitters": True,
         },
-
         "Add Log Distances": {
             "haversine": True,
             "manhattan": True,
@@ -175,7 +170,6 @@ if __name__ == "__main__":
             "heavy_hitters": True,
             "log_dist": True,
         },
-
         "Add Cyclical Time Features": {
             "haversine": True,
             "manhattan": True,
@@ -186,7 +180,6 @@ if __name__ == "__main__":
             "log_dist": True,
             "cyclical_time_features": True,
         },
-        
         "Add Distance Relationship Features": {
             "haversine": True,
             "manhattan": True,
@@ -198,7 +191,6 @@ if __name__ == "__main__":
             "cyclical_time_features": True,
             "distance_relationship_features": True,
         },
-
         "Grid Precision 1": {
             "haversine": True,
             "manhattan": True,
@@ -211,7 +203,6 @@ if __name__ == "__main__":
             "distance_relationship_features": True,
             "grid_precision": 1,
         },
-
         "Grid Precision 3": {
             "haversine": True,
             "manhattan": True,
@@ -224,7 +215,6 @@ if __name__ == "__main__":
             "distance_relationship_features": True,
             "grid_precision": 3,
         },
-
         "Grid Precision 4": {
             "haversine": True,
             "manhattan": True,
@@ -269,6 +259,10 @@ if __name__ == "__main__":
 # The following results were obtained using Ridge Regression (alpha=1.0)
 # and R² evaluated on the log-transformed trip duration.
 #
+# Binary time indicators and the rush-hour indicator are treated as numerical
+# features and passed through StandardScaler in the current preprocessing
+# configuration when their corresponding feature options are enabled.
+#
 # 1. Baseline:
 #    - Training R² Score : 0.06436
 #    - Validation R² Score: 0.06645
@@ -290,22 +284,26 @@ if __name__ == "__main__":
 #    - Validation R² Score: 0.66113
 #
 # 6. Add Log Distances:
-#    - Training R² Score : 0.72561
+#    - Training R² Score : 0.72558
 #    - Validation R² Score: 0.71050
 #
 # 7. Add Cyclical Time Features:
-#    - Training R² Score : 0.72554
-#    - Validation R² Score: 0.71050
+#    - Training R² Score : 0.72555
+#    - Validation R² Score: 0.71049
 #
 # 8. Add Distance Relationship Features:
-#    - Training R² Score : 0.72809
+#    - Training R² Score : 0.72825
 #    - Validation R² Score: 0.71223
 #
 # 9. Grid Precision Experiments:
-#    - Precision 1: Training R² = 0.66525 | Validation R² = 0.65998
-#    - Precision 2: Training R² = 0.72809 | Validation R² = 0.71223
-#    - Precision 3: Training R² = 0.89229 | Validation R² = 0.69295
+#    - Precision 1: Training R² = 0.66529 | Validation R² = 0.65999
+#    - Precision 2: Training R² = 0.72825 | Validation R² = 0.71223
+#    - Precision 3: Training R² = 0.89245 | Validation R² = 0.69296
 #    - Precision 4: Training R² = 0.94799 | Validation R² = 0.64835
+#
+#    Note: Precision 2 uses the default configuration in the
+#    "Add Distance Relationship Features" experiment, so these results
+#    represent the same configuration rather than an independent run.
 #
 # DECISION AND NEXT STEPS:
 # ------------------------
@@ -316,6 +314,11 @@ if __name__ == "__main__":
 # precision settings. Increasing precision to 3 and 4 substantially
 # increased training performance but reduced validation performance,
 # indicating overfitting.
+#
+# Changing the treatment of binary indicators to numerical features did
+# not materially change the overall results. The best validation R² remains
+# 0.71223, achieved by the configuration with distance relationship
+# features and the default grid precision of 2.
 #
 # Therefore, grid_precision=2 is retained as the default setting.
 # The next step is to continue EDA and investigate additional patterns
