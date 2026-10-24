@@ -111,7 +111,8 @@ def cat_num_features(
     """Generates categorical and numerical feature names for preprocessing.
 
     Dynamically compiles feature lists based on the enabled feature-engineering
-    options to keep the preprocessing configuration consistent.
+    options to keep the preprocessing configuration consistent. Binary
+    indicators are treated as numerical features and are not one-hot encoded.
 
     Args:
         haversine_distance (bool, optional): Includes Haversine distance and
@@ -122,14 +123,16 @@ def cat_num_features(
             Defaults to False.
         airport (bool, optional): Includes distance features for JFK, LGA,
             and EWR airports. Defaults to False.
-        interactions (bool, optional): Includes rush-hour and enabled
-            distance interaction features. Defaults to False.
+        interactions (bool, optional): Includes the numerical rush-hour
+            indicator and enabled distance interaction features.
+            Defaults to False.
         heavy_hitters (bool, optional): Includes geographic grid and
             time-slot categorical features. Defaults to False.
         log_dist (bool, optional): Includes log-transformed distance features
             for enabled distance metrics. Defaults to False.
         cyclical_time_features (bool, optional): Includes cyclical time
-            features and time-based categorical indicators. Defaults to False.
+            features and binary time indicators as numerical features.
+            Defaults to False.
         distance_relationship_features (bool, optional): Includes the ratio
             and difference between Manhattan and Haversine distances.
             Requires both distance features. Defaults to False.
@@ -182,7 +185,7 @@ def cat_num_features(
         )
 
     if interactions:
-        categorical_features.append("is_rush_hour")
+        numerical_features.append("is_rush_hour")
 
         if manhattan_distance:
             numerical_features.append("rush_hour_manhattan")
@@ -214,11 +217,6 @@ def cat_num_features(
                 "pickup_hour_cos",
                 "pickup_day_sin",
                 "pickup_day_cos",
-            ]
-        )
-
-        categorical_features.extend(
-            [
                 "is_weekend",
                 "is_night",
                 "is_morning_peak",

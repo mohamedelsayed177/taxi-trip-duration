@@ -14,23 +14,28 @@ sns.set_style("whitegrid")
 
 
 def plot_target_distribution(df):
-    """Plots raw duration (zoomed) vs log1p transformed duration."""
+    """Plot raw trip duration and its log1p transformation."""
     fig, axes = plt.subplots(1, 2, figsize=(15, 5))
 
-    # Plot 1: Zoom in on trips under 2 hours (7200 seconds)
+    # Plot 1: Focus on trips under two hours.
     sns.histplot(
         df[df["trip_duration"] < 7200]["trip_duration"],
         bins=100,
         ax=axes[0],
         color="#3498db",
     )
-    axes[0].set_title("Raw Duration (Zoomed < 2 hours)")
+    axes[0].set_title("Raw Duration (Trips Under 2 Hours)")
     axes[0].set_xlabel("Trip Duration (seconds)")
     axes[0].set_ylabel("Frequency")
 
-    # Plot 2: Log1p transformed distribution
-    sns.histplot(np.log1p(df["trip_duration"]), bins=100, ax=axes[1], color="#2ecc71")
-    axes[1].set_title("Log1p Transformed Duration")
+    # Plot 2: Show the transformed target across the full dataset.
+    sns.histplot(
+        np.log1p(df["trip_duration"]),
+        bins=100,
+        ax=axes[1],
+        color="#2ecc71",
+    )
+    axes[1].set_title("Log1p Transformed Duration (All Trips)")
     axes[1].set_xlabel("Log1p(Trip Duration)")
     axes[1].set_ylabel("Frequency")
 
@@ -39,10 +44,13 @@ def plot_target_distribution(df):
 
 
 def plot_geographic_distribution(df, n_samples=100000):
-    """Plots pickup coordinates to visualize spatial distribution and GPS errors."""
+    """Plot a sample of pickup locations within the NYC region."""
     plt.figure(figsize=(8, 6))
 
-    sample_df = df.sample(n=min(n_samples, len(df)), random_state=42)
+    sample_df = df.sample(
+        n=min(n_samples, len(df)),
+        random_state=42,
+    )
 
     sns.scatterplot(
         x=sample_df["pickup_longitude"],
@@ -54,7 +62,7 @@ def plot_geographic_distribution(df, n_samples=100000):
     )
 
     plt.title(
-        "Geographic Distribution of Pickups (Identifying GPS Outliers)",
+        "Geographic Distribution of Pickup Locations (NYC Region)",
         fontsize=14,
         pad=15,
     )
