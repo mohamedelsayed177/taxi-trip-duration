@@ -5,17 +5,21 @@ This module provides visualization functions for target distributions,
 geographic distributions, and enriched deep-dive insights.
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
 
 # Set global seaborn styling
 sns.set_style("whitegrid")
 
 
 def plot_target_distribution(df):
-    """Plot raw trip duration and its log1p transformation."""
-    _ , axes = plt.subplots(1, 2, figsize=(15, 5))
+    """Plot raw trip duration and its log1p transformation.
+
+    Args:
+        df: DataFrame containing trip duration feature.
+    """
+    _, axes = plt.subplots(1, 2, figsize=(15, 5))
 
     # Plot 1: Focus on trips under two hours.
     sns.histplot(
@@ -44,7 +48,12 @@ def plot_target_distribution(df):
 
 
 def plot_geographic_distribution(df, n_samples=100000):
-    """Plot a sample of pickup locations within the NYC region."""
+    """Plot a sample of pickup locations within the NYC region.
+
+    Args:
+        df: DataFrame containing pickup geographic coordinates.
+        n_samples: Maximum number of observations used for plotting.
+    """
     plt.figure(figsize=(8, 6))
 
     sample_df = df.sample(
@@ -94,8 +103,7 @@ def plot_distance_vs_duration(df, n_samples=100_000):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -104,11 +112,7 @@ def plot_distance_vs_duration(df, n_samples=100_000):
     if n_samples < 1:
         raise ValueError("n_samples must be at least 1.")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid observations are available for plotting.")
@@ -141,9 +145,7 @@ def plot_distance_vs_duration(df, n_samples=100_000):
             bins="log",
         )
 
-        ax.set_title(
-            f"{column.replace('_', ' ').title()} vs. Trip Duration"
-        )
+        ax.set_title(f"{column.replace('_', ' ').title()} vs. Trip Duration")
         ax.set_xlabel("Log1p(Distance in km)")
         ax.set_ylabel("Log1p(Trip Duration in seconds)")
 
@@ -159,8 +161,8 @@ def plot_distance_vs_duration(df, n_samples=100_000):
     )
     fig.tight_layout()
     plt.show()
-    
-    
+
+
 def plot_distance_distributions(df, n_samples=100_000):
     """Plot the central distributions of both geographic distance features.
 
@@ -178,8 +180,7 @@ def plot_distance_distributions(df, n_samples=100_000):
     ]
 
     missing_columns = [
-        column for column in distance_columns
-        if column not in df.columns
+        column for column in distance_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -188,11 +189,7 @@ def plot_distance_distributions(df, n_samples=100_000):
     if n_samples < 1:
         raise ValueError("n_samples must be at least 1.")
 
-    data = (
-        df[distance_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[distance_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid distance observations are available.")
@@ -222,18 +219,14 @@ def plot_distance_distributions(df, n_samples=100_000):
             color=color,
         )
 
-        ax.set_title(
-            f"{column.replace('_', ' ').title()} "
-            "(Up to 99th Percentile)"
-        )
+        ax.set_title(f"{column.replace('_', ' ').title()} (Up to 99th Percentile)")
         ax.set_xlabel("Distance (km)")
         ax.set_ylabel("Frequency")
 
     fig.suptitle("Geographic Distance Distributions", fontsize=14)
     fig.tight_layout()
-    plt.show()   
-    
-    
+    plt.show()
+
 
 def plot_distance_log_scaling(df, n_samples=100_000):
     """Compare original and log1p-transformed distance distributions.
@@ -252,8 +245,7 @@ def plot_distance_log_scaling(df, n_samples=100_000):
     ]
 
     missing_columns = [
-        column for column in distance_columns
-        if column not in df.columns
+        column for column in distance_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -262,11 +254,7 @@ def plot_distance_log_scaling(df, n_samples=100_000):
     if n_samples < 1:
         raise ValueError("n_samples must be at least 1.")
 
-    data = (
-        df[distance_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[distance_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid distance observations are available.")
@@ -282,9 +270,7 @@ def plot_distance_log_scaling(df, n_samples=100_000):
     fig, axes = plt.subplots(2, 2, figsize=(14, 9))
     colors = ["#3498db", "#2ecc71"]
 
-    for column_index, (column, color) in enumerate(
-        zip(distance_columns, colors)
-    ):
+    for column_index, (column, color) in enumerate(zip(distance_columns, colors)):
         upper_limit = data[column].quantile(0.99)
 
         distances = sample_df.loc[
@@ -322,9 +308,8 @@ def plot_distance_log_scaling(df, n_samples=100_000):
     )
     fig.tight_layout()
     plt.show()
-    
-    
-    
+
+
 def plot_temporal_patterns(summaries):
     """Plot median trip duration by pickup hour, weekday, and month.
 
@@ -365,7 +350,7 @@ def plot_temporal_patterns(summaries):
 
     fig.tight_layout()
     plt.show()
-    
+
 
 def plot_weekday_weekend_patterns(summary):
     """Plot median and 90th-percentile duration by day type.
@@ -401,7 +386,7 @@ def plot_weekday_weekend_patterns(summary):
 
     fig.tight_layout()
     plt.show()
-    
+
 
 def plot_rush_hour_patterns(summary):
     """Compare mean, median, and p90 trip duration by rush-hour group.
@@ -442,7 +427,7 @@ def plot_rush_hour_patterns(summary):
 
     fig.tight_layout()
     plt.show()
-    
+
 
 def plot_cyclical_time_encodings(df):
     """Plot pickup-hour and weekday encodings on circular coordinates.
@@ -469,16 +454,10 @@ def plot_cyclical_time_encodings(df):
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 6))
 
-    for ax, (category, sine, cosine, period, title) in zip(
-        axes, configurations
-    ):
+    for ax, (category, sine, cosine, period, title) in zip(axes, configurations):
         data = df[[category, sine, cosine]].dropna()
 
-        encoded = (
-            data.groupby(category)[[sine, cosine]]
-            .mean()
-            .reindex(range(period))
-        )
+        encoded = data.groupby(category)[[sine, cosine]].mean().reindex(range(period))
 
         if encoded.isna().any().any():
             raise ValueError(f"Missing encoded categories for {title}.")
@@ -492,9 +471,7 @@ def plot_cyclical_time_encodings(df):
 
         ax.plot(x_closed, y_closed, marker="o", color="#3498db")
 
-        for index, (x_value, y_value) in enumerate(
-            zip(x_values, y_values)
-        ):
+        for index, (x_value, y_value) in enumerate(zip(x_values, y_values)):
             ax.annotate(
                 str(index),
                 (x_value, y_value),
@@ -544,8 +521,7 @@ def plot_pickup_dropoff_density(df):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -556,30 +532,20 @@ def plot_pickup_dropoff_density(df):
 
     fig, axes = plt.subplots(1, 2, figsize=(15, 6))
 
-    for ax, (location, longitude, latitude) in zip(
-        axes, coordinate_pairs
-    ):
+    for ax, (location, longitude, latitude) in zip(axes, coordinate_pairs):
         coordinates = (
-            df[[longitude, latitude]]
-            .replace([np.inf, -np.inf], np.nan)
-            .dropna()
+            df[[longitude, latitude]].replace([np.inf, -np.inf], np.nan).dropna()
         )
 
-        within_window = (
-            coordinates[longitude].between(
-                longitude_min, longitude_max
-            )
-            & coordinates[latitude].between(
-                latitude_min, latitude_max
-            )
-        )
+        within_window = coordinates[longitude].between(
+            longitude_min, longitude_max
+        ) & coordinates[latitude].between(latitude_min, latitude_max)
 
         coordinates = coordinates.loc[within_window]
 
         if coordinates.empty:
             raise ValueError(
-                f"No {location.lower()} coordinates fall within "
-                "the plotting window."
+                f"No {location.lower()} coordinates fall within the plotting window."
             )
 
         hexbin = ax.hexbin(
@@ -647,17 +613,15 @@ def plot_spatial_grid_patterns(summaries):
             summary["median_duration_minutes"],
             color="#2ecc71",
         )
-        axes[row, 1].set_title(
-            f"Median Trip Duration by {location} Grid Cell"
-        )
+        axes[row, 1].set_title(f"Median Trip Duration by {location} Grid Cell")
         axes[row, 1].set_xlabel("Median Duration (minutes)")
         axes[row, 1].set_ylabel("Grid Cell")
         axes[row, 1].grid(axis="x", alpha=0.3)
 
     fig.tight_layout()
     plt.show()
-    
-    
+
+
 def plot_extreme_distance_coordinates(df, percentile=99):
     """Plot endpoints of trips above a Haversine distance percentile.
 
@@ -678,8 +642,7 @@ def plot_extreme_distance_coordinates(df, percentile=99):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -688,11 +651,7 @@ def plot_extreme_distance_coordinates(df, percentile=99):
     if not 0 < percentile < 100:
         raise ValueError("percentile must be between 0 and 100.")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid distance and coordinate records remain.")
@@ -713,10 +672,9 @@ def plot_extreme_distance_coordinates(df, percentile=99):
     for name, longitude, latitude, color in endpoint_specs:
         coordinates = extreme[[longitude, latitude]]
 
-        inside = (
-            coordinates[longitude].between(-74.5, -73.3)
-            & coordinates[latitude].between(40.4, 41.2)
-        )
+        inside = coordinates[longitude].between(-74.5, -73.3) & coordinates[
+            latitude
+        ].between(40.4, 41.2)
 
         axes[0].scatter(
             coordinates.loc[inside, longitude],
@@ -775,8 +733,7 @@ def plot_extreme_distance_coordinates(df, percentile=99):
     )
     fig.tight_layout()
     plt.show()
-    
-    
+
 
 def plot_airport_proximity_patterns(summaries):
     """Plot median trip duration across airport-distance bands.
@@ -819,8 +776,8 @@ def plot_airport_proximity_patterns(summaries):
     )
     fig.tight_layout()
     plt.show()
-    
-    
+
+
 def plot_bearing_distance_patterns(summaries):
     """Plot trip frequency and median distance by compass sector.
 
@@ -906,7 +863,7 @@ def plot_categorical_duration_patterns(summaries):
 
     fig.tight_layout()
     plt.show()
-    
+
 
 def plot_spatial_category_sparsity(summaries):
     """Plot spatial category frequency distributions and frequent cells.
@@ -925,18 +882,14 @@ def plot_spatial_category_sparsity(summaries):
 
     for column_index, (key, label) in enumerate(configurations):
         frequency_data = summaries["frequency_bands"]
-        frequency_data = frequency_data.loc[
-            frequency_data["category_feature"] == key
-        ]
+        frequency_data = frequency_data.loc[frequency_data["category_feature"] == key]
 
         axes[0, column_index].bar(
             frequency_data["frequency_band"].astype(str),
             frequency_data["category_count"],
             color="#3498db",
         )
-        axes[0, column_index].set_title(
-            f"Category Frequency Distribution: {label}"
-        )
+        axes[0, column_index].set_title(f"Category Frequency Distribution: {label}")
         axes[0, column_index].set_xlabel("Observations per Category")
         axes[0, column_index].set_ylabel("Number of Categories")
         axes[0, column_index].tick_params(axis="x", rotation=30)
@@ -952,17 +905,15 @@ def plot_spatial_category_sparsity(summaries):
             top_data["trip_count"],
             color="#2ecc71",
         )
-        axes[1, column_index].set_title(
-            f"Most Frequent Categories: {label}"
-        )
+        axes[1, column_index].set_title(f"Most Frequent Categories: {label}")
         axes[1, column_index].set_xlabel("Trip Count")
         axes[1, column_index].set_ylabel("Category")
         axes[1, column_index].grid(axis="x", alpha=0.3)
 
     fig.tight_layout()
     plt.show()
-    
-    
+
+
 def plot_distance_metric_comparison(df, n_samples=100_000):
     """Plot paired Haversine and Manhattan-style distance estimates.
 
@@ -980,8 +931,7 @@ def plot_distance_metric_comparison(df, n_samples=100_000):
     ]
 
     missing_columns = [
-        column for column in distance_columns
-        if column not in df.columns
+        column for column in distance_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -990,11 +940,7 @@ def plot_distance_metric_comparison(df, n_samples=100_000):
     if n_samples < 1:
         raise ValueError("n_samples must be at least 1.")
 
-    data = (
-        df[distance_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[distance_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid paired distance observations remain.")
@@ -1005,9 +951,7 @@ def plot_distance_metric_comparison(df, n_samples=100_000):
     # Restrict the plot to a common upper limit for readable axes.
     plot_limit = data.quantile(0.99).max()
 
-    plot_data = data.loc[
-        data[distance_columns].le(plot_limit).all(axis=1)
-    ]
+    plot_data = data.loc[data[distance_columns].le(plot_limit).all(axis=1)]
 
     if plot_data.empty:
         raise ValueError("No observations remain within the plotting range.")
@@ -1052,8 +996,8 @@ def plot_distance_metric_comparison(df, n_samples=100_000):
 
     fig.tight_layout()
     plt.show()
-    
-    
+
+
 def plot_distance_relationship_patterns(summaries):
     """Plot trip-duration trends across bins of distance-related features.
 

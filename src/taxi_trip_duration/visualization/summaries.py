@@ -1,4 +1,3 @@
-
 """Numerical summary utilities for NYC Taxi EDA."""
 
 import numpy as np
@@ -23,8 +22,7 @@ def summarize_distance_duration(df, n_bins=10):
     required_columns = ["trip_duration", *distance_columns]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -33,11 +31,7 @@ def summarize_distance_duration(df, n_bins=10):
     if n_bins < 2:
         raise ValueError("n_bins must be at least 2.")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid observations are available.")
@@ -49,9 +43,7 @@ def summarize_distance_duration(df, n_bins=10):
 
     for column in distance_columns:
         if data[column].nunique() < 2:
-            raise ValueError(
-                f"At least two distinct values are required for {column}."
-            )
+            raise ValueError(f"At least two distinct values are required for {column}.")
 
         distance_bins = pd.qcut(
             data[column],
@@ -68,12 +60,8 @@ def summarize_distance_duration(df, n_bins=10):
 
         summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-        summary["median_duration_minutes"] = (
-            summary.pop("median_duration_seconds") / 60
-        )
-        summary["p90_duration_minutes"] = (
-            summary.pop("p90_duration_seconds") / 60
-        )
+        summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+        summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
         summaries[column] = summary.reset_index(names="distance_bin")
 
@@ -87,7 +75,7 @@ def display_distance_duration_summary(df, n_bins=10):
     for column, summary in summaries.items():
         print(f"\n{column.replace('_', ' ').title()}")
         display(summary.round(2))
-        
+
 
 def summarize_distance_distributions(df):
     """Summarize the distributions of geographic distance features.
@@ -108,8 +96,7 @@ def summarize_distance_distributions(df):
     ]
 
     missing_columns = [
-        column for column in distance_columns
-        if column not in df.columns
+        column for column in distance_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -118,11 +105,7 @@ def summarize_distance_distributions(df):
     records = []
 
     for column in distance_columns:
-        distances = (
-            df[column]
-            .replace([np.inf, -np.inf], np.nan)
-            .dropna()
-        )
+        distances = df[column].replace([np.inf, -np.inf], np.nan).dropna()
 
         if distances.empty:
             raise ValueError(f"No valid observations for {column}.")
@@ -132,16 +115,18 @@ def summarize_distance_distributions(df):
 
         p99 = distances.quantile(0.99)
 
-        records.append({
-            "distance_feature": column,
-            "valid_count": len(distances),
-            "zero_count": int((distances == 0).sum()),
-            "median_km": distances.median(),
-            "p95_km": distances.quantile(0.95),
-            "p99_km": p99,
-            "max_km": distances.max(),
-            "above_p99_count": int((distances > p99).sum()),
-        })
+        records.append(
+            {
+                "distance_feature": column,
+                "valid_count": len(distances),
+                "zero_count": int((distances == 0).sum()),
+                "median_km": distances.median(),
+                "p95_km": distances.quantile(0.95),
+                "p99_km": p99,
+                "max_km": distances.max(),
+                "above_p99_count": int((distances > p99).sum()),
+            }
+        )
 
     return pd.DataFrame(records).set_index("distance_feature")
 
@@ -165,18 +150,13 @@ def summarize_log_distance_distributions(df):
     ]
 
     missing_columns = [
-        column for column in distance_columns
-        if column not in df.columns
+        column for column in distance_columns if column not in df.columns
     ]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
 
-    data = (
-        df[distance_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[distance_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid distance observations are available.")
@@ -194,21 +174,20 @@ def summarize_log_distance_distributions(df):
             ("Original", original),
             ("Log1p", transformed),
         ]:
-            records.append({
-                "distance_feature": column,
-                "scale": scale,
-                "valid_count": len(values),
-                "median": values.median(),
-                "p95": values.quantile(0.95),
-                "p99": values.quantile(0.99),
-                "maximum": values.max(),
-                "skewness": values.skew(),
-            })
+            records.append(
+                {
+                    "distance_feature": column,
+                    "scale": scale,
+                    "valid_count": len(values),
+                    "median": values.median(),
+                    "p95": values.quantile(0.95),
+                    "p99": values.quantile(0.99),
+                    "maximum": values.max(),
+                    "skewness": values.skew(),
+                }
+            )
 
-    return pd.DataFrame(records).set_index(
-        ["distance_feature", "scale"]
-    )
-    
+    return pd.DataFrame(records).set_index(["distance_feature", "scale"])
 
 
 def summarize_temporal_patterns(df):
@@ -232,18 +211,13 @@ def summarize_temporal_patterns(df):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid temporal observations are available.")
@@ -270,12 +244,8 @@ def summarize_temporal_patterns(df):
 
         summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-        summary["median_duration_minutes"] = (
-            summary.pop("median_duration_seconds") / 60
-        )
-        summary["p90_duration_minutes"] = (
-            summary.pop("p90_duration_seconds") / 60
-        )
+        summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+        summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
         return summary
 
@@ -284,13 +254,27 @@ def summarize_temporal_patterns(df):
     by_month = summarize_by("pickup_month")
 
     day_names = [
-        "Monday", "Tuesday", "Wednesday", "Thursday",
-        "Friday", "Saturday", "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
     ]
     month_names = [
-        "January", "February", "March", "April",
-        "May", "June", "July", "August",
-        "September", "October", "November", "December",
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
     ]
 
     by_day.index = [day_names[int(day)] for day in by_day.index]
@@ -314,7 +298,8 @@ def display_temporal_summary(summaries):
     for title, key in sections:
         print(f"\n{title}")
         display(summaries[key].round(2))
-        
+
+
 def summarize_weekday_weekend(df):
     """Summarize trip duration for weekdays and weekends.
 
@@ -335,19 +320,13 @@ def summarize_weekday_weekend(df):
     required_columns = ["pickup_day_of_week", "trip_duration"]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-        .copy()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna().copy()
 
     if data.empty:
         raise ValueError("No valid observations are available.")
@@ -373,12 +352,8 @@ def summarize_weekday_weekend(df):
 
     summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-    summary["median_duration_minutes"] = (
-        summary.pop("median_duration_seconds") / 60
-    )
-    summary["p90_duration_minutes"] = (
-        summary.pop("p90_duration_seconds") / 60
-    )
+    summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+    summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
     return summary.reindex(["Weekday", "Weekend"])
 
@@ -399,19 +374,13 @@ def summarize_rush_hour_patterns(df):
     required_columns = ["is_rush_hour", "trip_duration"]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-        .copy()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna().copy()
 
     if data.empty:
         raise ValueError("No valid observations are available.")
@@ -422,10 +391,12 @@ def summarize_rush_hour_patterns(df):
     if (data["trip_duration"] < 0).any():
         raise ValueError("Trip durations must be non-negative.")
 
-    data["rush_hour_group"] = data["is_rush_hour"].map({
-        0: "Non-Rush Hour",
-        1: "Rush Hour",
-    })
+    data["rush_hour_group"] = data["is_rush_hour"].map(
+        {
+            0: "Non-Rush Hour",
+            1: "Rush Hour",
+        }
+    )
 
     grouped = data.groupby("rush_hour_group")["trip_duration"]
 
@@ -437,22 +408,13 @@ def summarize_rush_hour_patterns(df):
 
     summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-    summary["trip_share_pct"] = (
-        summary["trip_count"] / len(data) * 100
-    )
+    summary["trip_share_pct"] = summary["trip_count"] / len(data) * 100
 
-    summary["mean_duration_minutes"] = (
-        summary.pop("mean_duration_seconds") / 60
-    )
-    summary["median_duration_minutes"] = (
-        summary.pop("median_duration_seconds") / 60
-    )
-    summary["p90_duration_minutes"] = (
-        summary.pop("p90_duration_seconds") / 60
-    )
+    summary["mean_duration_minutes"] = summary.pop("mean_duration_seconds") / 60
+    summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+    summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
     return summary.reindex(["Non-Rush Hour", "Rush Hour"])
-
 
 
 def summarize_cyclical_encodings(df):
@@ -492,8 +454,7 @@ def summarize_cyclical_encodings(df):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -502,20 +463,12 @@ def summarize_cyclical_encodings(df):
     records = []
 
     for name, category, sine, cosine, period in configurations:
-        data = (
-            df[[category, sine, cosine]]
-            .replace([np.inf, -np.inf], np.nan)
-            .dropna()
-        )
+        data = df[[category, sine, cosine]].replace([np.inf, -np.inf], np.nan).dropna()
 
         if not data[category].isin(range(period)).all():
             raise ValueError(f"Invalid category values found for {name}.")
 
-        encoded = (
-            data.groupby(category)[[sine, cosine]]
-            .mean()
-            .reindex(range(period))
-        )
+        encoded = data.groupby(category)[[sine, cosine]].mean().reindex(range(period))
 
         if encoded.isna().any().any():
             raise ValueError(f"Some categories are missing for {name}.")
@@ -533,22 +486,24 @@ def summarize_cyclical_encodings(df):
         regular_distance = distances[0]
         wraparound_distance = distances[-1]
 
-        records.append({
-            "time_cycle": name,
-            "category_count": period,
-            "mean_neighbor_distance": regular_distances.mean(),
-            "min_neighbor_distance": regular_distances.min(),
-            "max_neighbor_distance": regular_distances.max(),
-            "first_to_second_distance": regular_distance,
-            "last_to_first_distance": wraparound_distance,
-            "wraparound_to_regular_ratio": (
-                wraparound_distance / regular_distance
-                if regular_distance > 0
-                else np.nan
-            ),
-            "raw_regular_gap": 1,
-            "raw_wraparound_gap": period - 1,
-        })
+        records.append(
+            {
+                "time_cycle": name,
+                "category_count": period,
+                "mean_neighbor_distance": regular_distances.mean(),
+                "min_neighbor_distance": regular_distances.min(),
+                "max_neighbor_distance": regular_distances.max(),
+                "first_to_second_distance": regular_distance,
+                "last_to_first_distance": wraparound_distance,
+                "wraparound_to_regular_ratio": (
+                    wraparound_distance / regular_distance
+                    if regular_distance > 0
+                    else np.nan
+                ),
+                "raw_regular_gap": 1,
+                "raw_wraparound_gap": period - 1,
+            }
+        )
 
     return pd.DataFrame(records).set_index("time_cycle")
 
@@ -578,8 +533,7 @@ def summarize_location_coverage(df):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -589,34 +543,29 @@ def summarize_location_coverage(df):
 
     for location, longitude, latitude in coordinate_pairs:
         coordinates = (
-            df[[longitude, latitude]]
-            .replace([np.inf, -np.inf], np.nan)
-            .dropna()
+            df[[longitude, latitude]].replace([np.inf, -np.inf], np.nan).dropna()
         )
 
-        within_window = (
-            coordinates[longitude].between(-74.5, -73.3)
-            & coordinates[latitude].between(40.4, 41.2)
-        )
+        within_window = coordinates[longitude].between(-74.5, -73.3) & coordinates[
+            latitude
+        ].between(40.4, 41.2)
 
         valid_count = len(coordinates)
         within_count = int(within_window.sum())
 
-        records.append({
-            "location": location,
-            "valid_coordinate_pairs": valid_count,
-            "within_window_count": within_count,
-            "within_window_pct": (
-                within_count / valid_count * 100
-                if valid_count else np.nan
-            ),
-            "outside_window_count": valid_count - within_count,
-        })
+        records.append(
+            {
+                "location": location,
+                "valid_coordinate_pairs": valid_count,
+                "within_window_count": within_count,
+                "within_window_pct": (
+                    within_count / valid_count * 100 if valid_count else np.nan
+                ),
+                "outside_window_count": valid_count - within_count,
+            }
+        )
 
     return pd.DataFrame(records).set_index("location")
-
-
-
 
 
 def summarize_spatial_grid_patterns(df, top_n=15):
@@ -643,8 +592,7 @@ def summarize_spatial_grid_patterns(df, top_n=15):
 
     required_columns = [*grid_columns, "trip_duration"]
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -653,11 +601,7 @@ def summarize_spatial_grid_patterns(df, top_n=15):
     summaries = {}
 
     for column, label in grid_columns.items():
-        data = (
-            df[[column, "trip_duration"]]
-            .replace([np.inf, -np.inf], np.nan)
-            .dropna()
-        )
+        data = df[[column, "trip_duration"]].replace([np.inf, -np.inf], np.nan).dropna()
 
         if data.empty:
             raise ValueError(f"No valid observations available for {label}.")
@@ -675,18 +619,10 @@ def summarize_spatial_grid_patterns(df, top_n=15):
 
         summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-        summary["trip_share_pct"] = (
-            summary["trip_count"] / len(data) * 100
-        )
-        summary["mean_duration_minutes"] = (
-            summary.pop("mean_duration_seconds") / 60
-        )
-        summary["median_duration_minutes"] = (
-            summary.pop("median_duration_seconds") / 60
-        )
-        summary["p90_duration_minutes"] = (
-            summary.pop("p90_duration_seconds") / 60
-        )
+        summary["trip_share_pct"] = summary["trip_count"] / len(data) * 100
+        summary["mean_duration_minutes"] = summary.pop("mean_duration_seconds") / 60
+        summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+        summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
         summary = (
             summary.sort_values("trip_count", ascending=False)
@@ -725,8 +661,7 @@ def summarize_extreme_distance_coordinates(df, percentile=99, top_n=10):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -738,12 +673,7 @@ def summarize_extreme_distance_coordinates(df, percentile=99, top_n=10):
     if top_n < 1:
         raise ValueError("top_n must be at least 1.")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-        .copy()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna().copy()
 
     if data.empty:
         raise ValueError("No valid distance and coordinate records remain.")
@@ -756,15 +686,13 @@ def summarize_extreme_distance_coordinates(df, percentile=99, top_n=10):
 
     threshold = data["haversine_distance"].quantile(percentile / 100)
 
-    pickup_inside = (
-        data["pickup_longitude"].between(-74.5, -73.3)
-        & data["pickup_latitude"].between(40.4, 41.2)
-    )
+    pickup_inside = data["pickup_longitude"].between(-74.5, -73.3) & data[
+        "pickup_latitude"
+    ].between(40.4, 41.2)
 
-    dropoff_inside = (
-        data["dropoff_longitude"].between(-74.5, -73.3)
-        & data["dropoff_latitude"].between(40.4, 41.2)
-    )
+    dropoff_inside = data["dropoff_longitude"].between(-74.5, -73.3) & data[
+        "dropoff_latitude"
+    ].between(40.4, 41.2)
 
     data["pickup_outside_window"] = ~pickup_inside
     data["dropoff_outside_window"] = ~dropoff_inside
@@ -781,41 +709,37 @@ def summarize_extreme_distance_coordinates(df, percentile=99, top_n=10):
     for group_name, group in groups.items():
         count = len(group)
 
-        records.append({
-            "group": group_name,
-            "trip_count": count,
-            "share_of_valid_trips_pct": count / len(data) * 100,
-            "distance_threshold_km": threshold,
-            "median_haversine_km": group["haversine_distance"].median(),
-            "maximum_haversine_km": group["haversine_distance"].max(),
-            "pickup_outside_count": int(
-                group["pickup_outside_window"].sum()
-            ),
-            "pickup_outside_pct": (
-                group["pickup_outside_window"].mean() * 100
-                if count else np.nan
-            ),
-            "dropoff_outside_count": int(
-                group["dropoff_outside_window"].sum()
-            ),
-            "dropoff_outside_pct": (
-                group["dropoff_outside_window"].mean() * 100
-                if count else np.nan
-            ),
-            "either_endpoint_outside_count": int(
-                (
-                    group["pickup_outside_window"]
-                    | group["dropoff_outside_window"]
-                ).sum()
-            ),
-            "either_endpoint_outside_pct": (
-                (
-                    group["pickup_outside_window"]
-                    | group["dropoff_outside_window"]
-                ).mean() * 100
-                if count else np.nan
-            ),
-        })
+        records.append(
+            {
+                "group": group_name,
+                "trip_count": count,
+                "share_of_valid_trips_pct": count / len(data) * 100,
+                "distance_threshold_km": threshold,
+                "median_haversine_km": group["haversine_distance"].median(),
+                "maximum_haversine_km": group["haversine_distance"].max(),
+                "pickup_outside_count": int(group["pickup_outside_window"].sum()),
+                "pickup_outside_pct": (
+                    group["pickup_outside_window"].mean() * 100 if count else np.nan
+                ),
+                "dropoff_outside_count": int(group["dropoff_outside_window"].sum()),
+                "dropoff_outside_pct": (
+                    group["dropoff_outside_window"].mean() * 100 if count else np.nan
+                ),
+                "either_endpoint_outside_count": int(
+                    (
+                        group["pickup_outside_window"] | group["dropoff_outside_window"]
+                    ).sum()
+                ),
+                "either_endpoint_outside_pct": (
+                    (
+                        group["pickup_outside_window"] | group["dropoff_outside_window"]
+                    ).mean()
+                    * 100
+                    if count
+                    else np.nan
+                ),
+            }
+        )
 
     summary = pd.DataFrame(records).set_index("group")
 
@@ -832,17 +756,15 @@ def summarize_extreme_distance_coordinates(df, percentile=99, top_n=10):
     if "id" in data.columns:
         example_columns.insert(0, "id")
 
-    top_examples = (
-        data.nlargest(top_n, "haversine_distance")[example_columns]
-        .reset_index(drop=True)
-    )
+    top_examples = data.nlargest(top_n, "haversine_distance")[
+        example_columns
+    ].reset_index(drop=True)
 
     return {
         "summary": summary,
         "top_examples": top_examples,
     }
-    
-    
+
 
 def summarize_airport_proximity(df):
     """Summarize trip duration across airport-distance bands.
@@ -871,8 +793,7 @@ def summarize_airport_proximity(df):
     required_columns = ["trip_duration", *distance_columns]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -890,11 +811,7 @@ def summarize_airport_proximity(df):
     summaries = {}
 
     for column in distance_columns:
-        data = (
-            df[[column, "trip_duration"]]
-            .replace([np.inf, -np.inf], np.nan)
-            .dropna()
-        )
+        data = df[[column, "trip_duration"]].replace([np.inf, -np.inf], np.nan).dropna()
 
         if data.empty:
             raise ValueError(f"No valid observations for {column}.")
@@ -927,19 +844,11 @@ def summarize_airport_proximity(df):
 
         summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-        summary["trip_share_pct"] = (
-            summary["trip_count"] / len(data) * 100
-        )
+        summary["trip_share_pct"] = summary["trip_count"] / len(data) * 100
 
-        summary["mean_duration_minutes"] = (
-            summary.pop("mean_duration_seconds") / 60
-        )
-        summary["median_duration_minutes"] = (
-            summary.pop("median_duration_seconds") / 60
-        )
-        summary["p90_duration_minutes"] = (
-            summary.pop("p90_duration_seconds") / 60
-        )
+        summary["mean_duration_minutes"] = summary.pop("mean_duration_seconds") / 60
+        summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+        summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
         summaries[column] = summary
 
@@ -979,19 +888,13 @@ def summarize_bearing_distance_patterns(df):
     ]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-        .copy()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna().copy()
 
     if data.empty:
         raise ValueError("No valid observations are available.")
@@ -1005,43 +908,42 @@ def summarize_bearing_distance_patterns(df):
     if not data["pickup_bearing"].between(-180, 180).all():
         raise ValueError("Pickup bearing values must be between -180 and 180.")
 
-    identical_endpoints = (
-        data["pickup_longitude"].eq(data["dropoff_longitude"])
-        & data["pickup_latitude"].eq(data["dropoff_latitude"])
-    )
+    identical_endpoints = data["pickup_longitude"].eq(data["dropoff_longitude"]) & data[
+        "pickup_latitude"
+    ].eq(data["dropoff_latitude"])
 
     identical_data = data.loc[identical_endpoints]
     total_count = len(data)
 
-    overview = pd.DataFrame([{
-        "valid_trip_count": total_count,
-        "identical_endpoint_count": int(identical_endpoints.sum()),
-        "identical_endpoint_pct": (
-            identical_endpoints.mean() * 100
-        ),
-        "zero_haversine_count": int(
-            data["haversine_distance"].eq(0).sum()
-        ),
-        "zero_manhattan_count": int(
-            data["manhattan_distance"].eq(0).sum()
-        ),
-        "haversine_median_km": data["haversine_distance"].median(),
-        "haversine_p95_km": data["haversine_distance"].quantile(0.95),
-        "haversine_p99_km": data["haversine_distance"].quantile(0.99),
-        "haversine_max_km": data["haversine_distance"].max(),
-        "manhattan_median_km": data["manhattan_distance"].median(),
-        "manhattan_p95_km": data["manhattan_distance"].quantile(0.95),
-        "manhattan_p99_km": data["manhattan_distance"].quantile(0.99),
-        "manhattan_max_km": data["manhattan_distance"].max(),
-        "identical_endpoint_median_duration_min": (
-            identical_data["trip_duration"].median() / 60
-            if not identical_data.empty else np.nan
-        ),
-        "identical_endpoint_p90_duration_min": (
-            identical_data["trip_duration"].quantile(0.90) / 60
-            if not identical_data.empty else np.nan
-        ),
-    }])
+    overview = pd.DataFrame(
+        [
+            {
+                "valid_trip_count": total_count,
+                "identical_endpoint_count": int(identical_endpoints.sum()),
+                "identical_endpoint_pct": (identical_endpoints.mean() * 100),
+                "zero_haversine_count": int(data["haversine_distance"].eq(0).sum()),
+                "zero_manhattan_count": int(data["manhattan_distance"].eq(0).sum()),
+                "haversine_median_km": data["haversine_distance"].median(),
+                "haversine_p95_km": data["haversine_distance"].quantile(0.95),
+                "haversine_p99_km": data["haversine_distance"].quantile(0.99),
+                "haversine_max_km": data["haversine_distance"].max(),
+                "manhattan_median_km": data["manhattan_distance"].median(),
+                "manhattan_p95_km": data["manhattan_distance"].quantile(0.95),
+                "manhattan_p99_km": data["manhattan_distance"].quantile(0.99),
+                "manhattan_max_km": data["manhattan_distance"].max(),
+                "identical_endpoint_median_duration_min": (
+                    identical_data["trip_duration"].median() / 60
+                    if not identical_data.empty
+                    else np.nan
+                ),
+                "identical_endpoint_p90_duration_min": (
+                    identical_data["trip_duration"].quantile(0.90) / 60
+                    if not identical_data.empty
+                    else np.nan
+                ),
+            }
+        ]
+    )
 
     # Identical endpoints have no meaningful geographic direction.
     bearing_data = data.loc[~identical_endpoints].copy()
@@ -1049,9 +951,7 @@ def summarize_bearing_distance_patterns(df):
     sectors = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
     bearing_360 = bearing_data["pickup_bearing"] % 360
-    sector_indices = (
-        np.floor((bearing_360 + 22.5) / 45).astype(int) % 8
-    )
+    sector_indices = np.floor((bearing_360 + 22.5) / 45).astype(int) % 8
 
     bearing_data["bearing_sector"] = pd.Categorical(
         [sectors[index] for index in sector_indices],
@@ -1071,32 +971,26 @@ def summarize_bearing_distance_patterns(df):
         median_duration_seconds=("trip_duration", "median"),
     )
 
-    by_sector["p90_duration_seconds"] = (
-        grouped["trip_duration"].quantile(0.90)
-    )
+    by_sector["p90_duration_seconds"] = grouped["trip_duration"].quantile(0.90)
 
     by_sector["trip_share_pct"] = (
         by_sector["trip_count"] / len(bearing_data) * 100
-        if not bearing_data.empty else np.nan
+        if not bearing_data.empty
+        else np.nan
     )
 
-    by_sector["median_duration_minutes"] = (
-        by_sector.pop("median_duration_seconds") / 60
-    )
-    by_sector["p90_duration_minutes"] = (
-        by_sector.pop("p90_duration_seconds") / 60
-    )
+    by_sector["median_duration_minutes"] = by_sector.pop("median_duration_seconds") / 60
+    by_sector["p90_duration_minutes"] = by_sector.pop("p90_duration_seconds") / 60
 
     by_sector = by_sector.reindex(sectors)
-    by_sector["trip_count"] = (
-        by_sector["trip_count"].fillna(0).astype(int)
-    )
+    by_sector["trip_count"] = by_sector["trip_count"].fillna(0).astype(int)
 
     return {
         "overview": overview,
         "by_bearing_sector": by_sector,
     }
-    
+
+
 def summarize_categorical_duration(df, top_n=15):
     """Summarize trip duration across selected categorical features.
 
@@ -1124,8 +1018,7 @@ def summarize_categorical_duration(df, top_n=15):
     required_columns = [*categorical_columns, "trip_duration"]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
@@ -1134,11 +1027,7 @@ def summarize_categorical_duration(df, top_n=15):
     summaries = {}
 
     for column in categorical_columns:
-        data = (
-            df[[column, "trip_duration"]]
-            .replace([np.inf, -np.inf], np.nan)
-            .dropna()
-        )
+        data = df[[column, "trip_duration"]].replace([np.inf, -np.inf], np.nan).dropna()
 
         if data.empty:
             raise ValueError(f"No valid observations available for {column}.")
@@ -1156,24 +1045,13 @@ def summarize_categorical_duration(df, top_n=15):
 
         summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-        summary["trip_share_pct"] = (
-            summary["trip_count"] / len(data) * 100
-        )
-        summary["mean_duration_minutes"] = (
-            summary.pop("mean_duration_seconds") / 60
-        )
-        summary["median_duration_minutes"] = (
-            summary.pop("median_duration_seconds") / 60
-        )
-        summary["p90_duration_minutes"] = (
-            summary.pop("p90_duration_seconds") / 60
-        )
+        summary["trip_share_pct"] = summary["trip_count"] / len(data) * 100
+        summary["mean_duration_minutes"] = summary.pop("mean_duration_seconds") / 60
+        summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+        summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
         if column == "day_hour":
-            summary = (
-                summary.sort_values("trip_count", ascending=False)
-                .head(top_n)
-            )
+            summary = summary.sort_values("trip_count", ascending=False).head(top_n)
         else:
             summary = summary.sort_index()
 
@@ -1211,10 +1089,7 @@ def summarize_spatial_category_sparsity(df, top_n=15, rare_threshold=10):
         "pickup_dropoff_grid",
     ]
 
-    missing_columns = [
-        column for column in grid_columns
-        if column not in df.columns
-    ]
+    missing_columns = [column for column in grid_columns if column not in df.columns]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
@@ -1234,15 +1109,17 @@ def summarize_spatial_category_sparsity(df, top_n=15, rare_threshold=10):
     top_categories = {}
 
     for column in grid_columns:
-        categories = df[column].replace(
-            [np.inf, -np.inf],
-            np.nan,
-        ).dropna()
+        categories = (
+            df[column]
+            .replace(
+                [np.inf, -np.inf],
+                np.nan,
+            )
+            .dropna()
+        )
 
         if categories.empty:
-            raise ValueError(
-                f"No valid categories are available for {column}."
-            )
+            raise ValueError(f"No valid categories are available for {column}.")
 
         counts = categories.value_counts()
         total_observations = len(categories)
@@ -1250,34 +1127,30 @@ def summarize_spatial_category_sparsity(df, top_n=15, rare_threshold=10):
         below_threshold = counts < rare_threshold
         below_50 = counts < 50
 
-        observations_below_threshold = int(
-            counts[below_threshold].sum()
-        )
+        observations_below_threshold = int(counts[below_threshold].sum())
         observations_below_50 = int(counts[below_50].sum())
 
-        overview_records.append({
-            "category_feature": column,
-            "valid_observations": total_observations,
-            "unique_categories": len(counts),
-            "single_observation_categories": int((counts == 1).sum()),
-            "median_category_frequency": counts.median(),
-            "p90_category_frequency": counts.quantile(0.90),
-            "maximum_category_frequency": counts.max(),
-            "categories_below_threshold": int(below_threshold.sum()),
-            "observations_in_rare_categories": (
-                observations_below_threshold
-            ),
-            "rare_observation_share_pct": (
-                observations_below_threshold / total_observations * 100
-            ),
-            "categories_below_50": int(below_50.sum()),
-            "observations_in_categories_below_50": (
-                observations_below_50
-            ),
-            "observations_below_50_share_pct": (
-                observations_below_50 / total_observations * 100
-            ),
-        })
+        overview_records.append(
+            {
+                "category_feature": column,
+                "valid_observations": total_observations,
+                "unique_categories": len(counts),
+                "single_observation_categories": int((counts == 1).sum()),
+                "median_category_frequency": counts.median(),
+                "p90_category_frequency": counts.quantile(0.90),
+                "maximum_category_frequency": counts.max(),
+                "categories_below_threshold": int(below_threshold.sum()),
+                "observations_in_rare_categories": (observations_below_threshold),
+                "rare_observation_share_pct": (
+                    observations_below_threshold / total_observations * 100
+                ),
+                "categories_below_50": int(below_50.sum()),
+                "observations_in_categories_below_50": (observations_below_50),
+                "observations_below_50_share_pct": (
+                    observations_below_50 / total_observations * 100
+                ),
+            }
+        )
 
         category_bands = pd.cut(
             counts,
@@ -1286,10 +1159,12 @@ def summarize_spatial_category_sparsity(df, top_n=15, rare_threshold=10):
             include_lowest=True,
         )
 
-        frequency_table = pd.DataFrame({
-            "frequency_band": category_bands,
-            "trip_count": counts.to_numpy(),
-        })
+        frequency_table = pd.DataFrame(
+            {
+                "frequency_band": category_bands,
+                "trip_count": counts.to_numpy(),
+            }
+        )
 
         band_summary = (
             frequency_table.groupby(
@@ -1305,9 +1180,7 @@ def summarize_spatial_category_sparsity(df, top_n=15, rare_threshold=10):
         )
 
         band_summary["observation_share_pct"] = (
-            band_summary["observation_count"]
-            / total_observations
-            * 100
+            band_summary["observation_count"] / total_observations * 100
         )
         band_summary["category_feature"] = column
 
@@ -1319,15 +1192,11 @@ def summarize_spatial_category_sparsity(df, top_n=15, rare_threshold=10):
             .reset_index(name="trip_count")
         )
 
-        top_table["trip_share_pct"] = (
-            top_table["trip_count"] / total_observations * 100
-        )
+        top_table["trip_share_pct"] = top_table["trip_count"] / total_observations * 100
 
         top_categories[column] = top_table
 
-    overview = pd.DataFrame(overview_records).set_index(
-        "category_feature"
-    )
+    overview = pd.DataFrame(overview_records).set_index("category_feature")
 
     frequency_bands = pd.concat(
         frequency_records,
@@ -1339,7 +1208,7 @@ def summarize_spatial_category_sparsity(df, top_n=15, rare_threshold=10):
         "frequency_bands": frequency_bands,
         "top_categories": top_categories,
     }
-    
+
 
 def summarize_distance_metric_comparison(df):
     """Compare Haversine and Manhattan-style distances for the same trips.
@@ -1360,18 +1229,13 @@ def summarize_distance_metric_comparison(df):
     ]
 
     missing_columns = [
-        column for column in distance_columns
-        if column not in df.columns
+        column for column in distance_columns if column not in df.columns
     ]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
 
-    data = (
-        df[distance_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[distance_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid paired distance observations remain.")
@@ -1384,10 +1248,7 @@ def summarize_distance_metric_comparison(df):
     difference = manhattan - haversine
 
     positive_haversine = haversine > 0
-    distance_ratio = (
-        manhattan[positive_haversine]
-        / haversine[positive_haversine]
-    )
+    distance_ratio = manhattan[positive_haversine] / haversine[positive_haversine]
 
     summary = {
         "valid_trip_count": len(data),
@@ -1406,6 +1267,7 @@ def summarize_distance_metric_comparison(df):
     }
 
     return pd.DataFrame([summary])
+
 
 def summarize_distance_relationship_patterns(df, n_bins=10):
     """Summarize trip duration across bins of distance-related features.
@@ -1436,18 +1298,13 @@ def summarize_distance_relationship_patterns(df, n_bins=10):
     required_columns = ["trip_duration", *feature_columns]
 
     missing_columns = [
-        column for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
         raise KeyError(f"Missing required columns: {missing_columns}")
 
-    data = (
-        df[required_columns]
-        .replace([np.inf, -np.inf], np.nan)
-        .dropna()
-    )
+    data = df[required_columns].replace([np.inf, -np.inf], np.nan).dropna()
 
     if data.empty:
         raise ValueError("No valid observations remain for analysis.")
@@ -1467,15 +1324,17 @@ def summarize_distance_relationship_patterns(df, n_bins=10):
     for column in feature_columns:
         values = data[column]
 
-        distribution_records.append({
-            "feature": column,
-            "valid_count": len(values),
-            "mean": values.mean(),
-            "median": values.median(),
-            "p90": values.quantile(0.90),
-            "maximum": values.max(),
-            "skewness": values.skew(),
-        })
+        distribution_records.append(
+            {
+                "feature": column,
+                "valid_count": len(values),
+                "mean": values.mean(),
+                "median": values.median(),
+                "p90": values.quantile(0.90),
+                "maximum": values.max(),
+                "skewness": values.skew(),
+            }
+        )
 
         if values.nunique() < 2:
             raise ValueError(
@@ -1490,9 +1349,7 @@ def summarize_distance_relationship_patterns(df, n_bins=10):
         )
 
         if len(bins.cat.categories) < 2:
-            raise ValueError(
-                f"Cannot create multiple quantile bins for {column}."
-            )
+            raise ValueError(f"Cannot create multiple quantile bins for {column}.")
 
         grouped = data.groupby(bins, observed=True)["trip_duration"]
 
@@ -1504,27 +1361,14 @@ def summarize_distance_relationship_patterns(df, n_bins=10):
 
         summary["p90_duration_seconds"] = grouped.quantile(0.90)
 
-        summary["trip_share_pct"] = (
-            summary["trip_count"] / len(data) * 100
-        )
-        summary["mean_duration_minutes"] = (
-            summary.pop("mean_duration_seconds") / 60
-        )
-        summary["median_duration_minutes"] = (
-            summary.pop("median_duration_seconds") / 60
-        )
-        summary["p90_duration_minutes"] = (
-            summary.pop("p90_duration_seconds") / 60
-        )
+        summary["trip_share_pct"] = summary["trip_count"] / len(data) * 100
+        summary["mean_duration_minutes"] = summary.pop("mean_duration_seconds") / 60
+        summary["median_duration_minutes"] = summary.pop("median_duration_seconds") / 60
+        summary["p90_duration_minutes"] = summary.pop("p90_duration_seconds") / 60
 
-        duration_summaries[column] = summary.reset_index(
-            names="feature_bin"
-        )
+        duration_summaries[column] = summary.reset_index(names="feature_bin")
 
-    distribution_summary = (
-        pd.DataFrame(distribution_records)
-        .set_index("feature")
-    )
+    distribution_summary = pd.DataFrame(distribution_records).set_index("feature")
 
     return {
         "feature_distributions": distribution_summary,
