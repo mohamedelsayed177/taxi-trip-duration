@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # Remove identifiers
     test = drop_id_features(test)
 
-    # Apply the exact feature engineering used in final_pipeline_2.py
+    # Apply the exact feature engineering used in final_pipeline.py
     test = preprocess_data(
         test, 
         haversine=True, 
