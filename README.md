@@ -69,6 +69,46 @@ taxi-trip-duration/
 └── README.md
 ```
 
+
+## Project Architecture
+
+```mermaid
+flowchart TD
+    A["NYC Taxi Dataset"] --> B["Dataset Splitting"]
+    B --> C["Train / Validation / Test"]
+
+    C --> D["Exploratory Data Analysis"]
+    D --> E["Feature Engineering"]
+
+    E --> F["Data Manipulation"]
+    F --> G["Preprocessing"]
+
+    G --> H["Baseline Modeling"]
+    H --> I["Feature Experiments"]
+    I --> J["Final Ridge Pipeline"]
+
+    J --> K["Trained Model"]
+    K --> L["Test Evaluation"]
+
+    D --> M["Visualizations & Summaries"]
+    I --> N["Experiment Results"]
+    L --> O["Final Performance Report"]
+
+    M --> P["Project Report"]
+    N --> P
+    O --> P
+
+    classDef data fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef process fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef model fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef output fill:#f3e8ff,stroke:#9333ea,color:#581c87
+
+    class A,B,C data
+    class D,E,F,G,M process
+    class H,I,J,K model
+    class L,N,O,P output
+```
+
 ## Overview
 
 The objective of this project is to predict the total duration of a taxi trip using its pickup timestamp, pickup and drop-off coordinates, passenger information, and other available trip attributes.
