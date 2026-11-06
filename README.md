@@ -70,44 +70,43 @@ taxi-trip-duration/
 ```
 
 
+
 ## Project Architecture
 
 ```mermaid
 flowchart TD
-    A["NYC Taxi Dataset"] --> B["Dataset Splitting"]
-    B --> C["Train / Validation / Test"]
+    A["NYC Taxi Dataset"] --> B["Prepared Dataset Splits<br/>Train / Validation / Test"]
 
-    C --> D["Exploratory Data Analysis"]
-    D --> E["Feature Engineering"]
+    B --> C["Data Manipulation Modules<br/>data_helper.py<br/>feature_engineering.py"]
 
-    E --> F["Data Manipulation"]
-    F --> G["Preprocessing"]
+    C --> D["EDA Notebook<br/>EDA.ipynb"]
+    C --> E["Model Building"]
 
-    G --> H["Baseline Modeling"]
-    H --> I["Feature Experiments"]
-    I --> J["Final Ridge Pipeline"]
+    subgraph EDA["Exploratory Data Analysis"]
+        D --> F["Visualization Modules<br/>plotting.py<br/>summaries.py"]
+        F --> G["EDA Findings and Visualizations"]
+    end
 
-    J --> K["Trained Model"]
-    K --> L["Test Evaluation"]
+    subgraph MODEL["Model Development"]
+        E --> H["Baseline Modeling<br/>baseline.py"]
+        E --> I["Feature Experiments<br/>explore.py"]
+        I --> J["Final Pipeline<br/>final_pipeline.py"]
+        H --> I
+    end
 
-    D --> M["Visualizations & Summaries"]
-    I --> N["Experiment Results"]
-    L --> O["Final Performance Report"]
+    J --> K["Trained Ridge Pipeline<br/>ridge_model.pkl"]
+    K --> L["Model Testing<br/>test.py"]
+    B --> L
+    L --> M["Final Test Results"]
 
-    M --> P["Project Report"]
-    N --> P
-    O --> P
+    G --> N["Project Report"]
+    M --> N
 
-    classDef data fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
-    classDef process fill:#dcfce7,stroke:#16a34a,color:#14532d
-    classDef model fill:#fef3c7,stroke:#d97706,color:#78350f
-    classDef output fill:#f3e8ff,stroke:#9333ea,color:#581c87
-
-    class A,B,C data
-    class D,E,F,G,M process
-    class H,I,J,K model
-    class L,N,O,P output
+    style D fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    style J fill:#dcfce7,stroke:#16a34a,color:#14532d
+    style L fill:#fef3c7,stroke:#d97706,color:#78350f
 ```
+
 
 ## Overview
 
