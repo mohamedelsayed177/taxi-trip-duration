@@ -6,6 +6,7 @@ on the unseen test dataset.
 """
 
 import os
+
 import joblib
 from sklearn.metrics import r2_score
 
@@ -14,7 +15,6 @@ from taxi_trip_duration.manipulation.data_helper import (
     load_dataset,
 )
 from taxi_trip_duration.manipulation.feature_engineering import (
-    preprocess_data,
     target_log,
 )
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # Locate and load the saved model
     current_dir = os.path.dirname(os.path.abspath(__file__))
     model_path = os.path.join(current_dir, "..", "..", "..", "model", "ridge_model.pkl")
-    
+
     print(f"Loading trained model from: {model_path}")
     pipeline = joblib.load(model_path)
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     print("-" * 50)
     print(f">> Final Test R² Score: {test_score:.5f}")
     print("-" * 50)
-    
+
 # --------------------------------------------------
 # >> Final Test R² Score: 0.71629
 # --------------------------------------------------
