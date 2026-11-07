@@ -7,6 +7,7 @@ and optional geographic and advanced temporal feature calculations.
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 
 # Mean Earth radius in kilometers, used for geographic distance calculations
 EARTH_RADIUS_KM = 6371.0
@@ -526,3 +527,52 @@ def preprocess_data(
         df = distance_relationships(df)
 
     return df
+
+class TaxiFeatureEngineer(BaseEstimator, TransformerMixin):
+    def __init__(
+        self,
+        eda=False,
+        haversine=False,
+        manhattan=False,
+        bearing=False,
+        airport=False,
+        interactions=False,
+        heavy_hitters=False,
+        log_dist=False,
+        cyclical_time_features=False,
+        distance_relationship_features=False,
+        grid_precision=2,
+    ):
+        self.eda = eda
+        self.haversine = haversine
+        self.manhattan = manhattan
+        self.bearing = bearing
+        self.airport = airport
+        self.interactions = interactions
+        self.heavy_hitters = heavy_hitters
+        self.log_dist = log_dist
+        self.cyclical_time_features = cyclical_time_features
+        self.distance_relationship_features = distance_relationship_features
+        self.grid_precision = grid_precision
+
+    def fit(self, X, y=None):
+        # Stateless transformer; if you ever add target encoding or quantile bins
+        # derived from training data, fit logic goes here using strictly X (and y).
+        return self
+
+    def transform(self, X):
+        # Pass data directly into your existing module function
+        return preprocess_data(
+            X,
+            eda=self.eda,
+            haversine=self.haversine,
+            manhattan=self.manhattan,
+            bearing=self.bearing,
+            airport=self.airport,
+            interactions=self.interactions,
+            heavy_hitters=self.heavy_hitters,
+            log_dist=self.log_dist,
+            cyclical_time_features=self.cyclical_time_features,
+            distance_relationship_features=self.distance_relationship_features,
+            grid_precision=self.grid_precision,
+        )

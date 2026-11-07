@@ -30,20 +30,6 @@ if __name__ == "__main__":
     # Remove identifiers
     test = drop_id_features(test)
 
-    # Apply the exact feature engineering used in final_pipeline.py
-    test = preprocess_data(
-        test, 
-        haversine=True, 
-        manhattan=True, 
-        bearing=True, 
-        airport=True, 
-        interactions=True, 
-        heavy_hitters=True, 
-        log_dist=True, 
-        cyclical_time_features=True, 
-        distance_relationship_features=True
-    )
-
     # Apply log1p transformation to the target
     test = target_log(test, drop_original=True)
 

@@ -21,49 +21,23 @@ from taxi_trip_duration.manipulation.data_helper import (
     train_val_split,
 )
 from taxi_trip_duration.manipulation.feature_engineering import (
-    preprocess_data,
     target_log,
+    TaxiFeatureEngineer,
 )
-
-def ridge_model(preprocessor):
-    """Combines the preprocessing steps with a Ridge Regression model.
-
-    Args:
-        preprocessor (sklearn.compose.ColumnTransformer): Configured
-            preprocessing transformer.
-
-    Returns:
-        sklearn.pipeline.Pipeline: Pipeline containing preprocessing
-            and the Ridge Regression model.
-    """
-    model = Ridge(alpha=1.0)
-    ridge_pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("model", model)])
-
-    return ridge_pipeline
 
 if __name__ == "__main__":
     # Load and clean data
     train, val, _ = load_dataset(data_type="split")
     
+    # Drop identifier features from both training and validation datasets
     train = drop_id_features(train)
     val = drop_id_features(val)
 
-    # Apply best feature engineering directly
-    train = preprocess_data(
-        train, haversine=True, manhattan=True, bearing=True, airport=True, 
-        interactions=True, heavy_hitters=True, log_dist=True, 
-        cyclical_time_features=True, distance_relationship_features=True
-    )
-    val = preprocess_data(
-        val, haversine=True, manhattan=True, bearing=True, airport=True, 
-        interactions=True, heavy_hitters=True, log_dist=True, 
-        cyclical_time_features=True, distance_relationship_features=True
-    )
-
-    # Transform target
+    # Apply log1p transformation to the target variable for both datasets
     train = target_log(train, drop_original=True)
     val = target_log(val, drop_original=True)
 
+    # Split features and target for training and validation sets
     X_train, y_train, X_val, y_val = train_val_split(train, val)
 
     # Select categorical and numerical features for the best config
@@ -73,9 +47,25 @@ if __name__ == "__main__":
         cyclical_time_features=True, distance_relationship_features=True
     )
 
-    # Build, train, and evaluate pipeline
-    preprocessor = preprocessing(categorical, numerical, scaling="standard")
-    pipeline = ridge_model(preprocessor)
+    # Build, train, and evaluate pipeline    
+    pipeline = Pipeline(
+        steps=[
+            ("feature_engineer",TaxiFeatureEngineer(
+                                haversine=True,
+                                manhattan=True,
+                                bearing=True,
+                                airport=True,
+                                interactions=True,
+                                heavy_hitters=True,
+                                log_dist=True,
+                                cyclical_time_features=True,
+                                distance_relationship_features=True,
+                                                ),
+             ),
+            ("preprocessor", preprocessing(categorical, numerical, scaling="standard")),
+            ("model", Ridge(alpha=1.0)),
+        ]
+    )
     pipeline.fit(X_train, y_train)
 
     train_score = r2_score(y_train, pipeline.predict(X_train))
